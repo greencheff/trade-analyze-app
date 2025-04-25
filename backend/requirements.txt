@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+pandas
+sqlalchemy
+databases
+pydantic
+requests
+redis
+ccxt
+alembic

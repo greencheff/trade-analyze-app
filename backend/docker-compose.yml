@@ -1,0 +1,14 @@
+version: '3.8'
+services:
+  api:
+    build: ./backend
+    ports: ['8000:8000']
+    env_file: ./backend/.env.sample
+  redis:
+    image: redis:6
+  db:
+    image: postgres:14
+    environment:
+      POSTGRES_DB: trade_db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
