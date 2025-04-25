@@ -1,5 +1,10 @@
-import Router from './router.jsx'
+// src/App.jsx
 
-export default function App() {
-  return <Router />
+import React from 'react';
+import Router from './router'; // ya da './router.jsx'
+
+function App() {
+  return <Router />;
 }
+
+export default App;
