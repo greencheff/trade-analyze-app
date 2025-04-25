@@ -1,12 +1,45 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Trade Analyzer</title>
-</head>
-<body class="bg-gray-100">
-  <div id="root"></div>
-  <script type="module" src="/src/main.jsx"></script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Trade Analyze App</title>
+
+    <!-- Favicon -->
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+
+    <!-- Tailwind CSS (or custom stylesheet) -->
+    <link href="%PUBLIC_URL%/styles.css" rel="stylesheet" />
+
+    <!-- Google Fonts (Roboto as an example) -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Add any additional CSS frameworks or libraries as needed -->
+    <!-- Example: FontAwesome -->
+    <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"> -->
+
+    <!-- Custom JavaScript or tracking scripts -->
+    <!-- <script async src="https://www.googletagmanager.com/gtag/js?id=UA-XXXXXX"></script> -->
+
+  </head>
+  
+  <body class="bg-gray-100">
+    <!-- The React App renders here -->
+    <div id="root"></div>
+
+    <!-- React JS entry point (Vite) -->
+    <script type="module" src="%PUBLIC_URL%/index.js"></script>
+
+    <!-- Backend API Endpoint (if needed in front-end) -->
+    <script>
+      // Example of setting up an API base URL for the frontend
+      const apiBaseUrl = "https://your-backend-url.com"; 
+      console.log("Backend API URL set:", apiBaseUrl);
+    </script>
+
+  </body>
 </html>
