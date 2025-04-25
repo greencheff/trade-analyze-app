@@ -1,54 +1,57 @@
-// frontend/src/context/AuthContext.jsx
+// frontend/src/pages/Auth.jsx
 
-import React, { createContext, useState, useEffect } from 'react'
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
-// Create the context with default values
-export const AuthContext = createContext({
-  user: null,
-  login: () => {},
-  logout: () => {},
-  isAuthenticated: false,
-})
+export default function Auth() {
+  const { login } = useAuth();
+  const [email, setEmail] = useState("test@demo.com");
+  const [password, setPassword] = useState("123456");
+  const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
-export function AuthProvider({ children }) {
-  // Initialize user state from localStorage (persists across reloads)
-  const [user, setUser] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem('tradeAnalyzerUser')) || null
-    } catch {
-      return null
-    }
-  })
-
-  // when user state changes, sync to localStorage
-  useEffect(() => {
-    if (user) {
-      localStorage.setItem('tradeAnalyzerUser', JSON.stringify(user))
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const success = login(email, password);
+    if (success) {
+      navigate("/dashboard");
     } else {
-      localStorage.removeItem('tradeAnalyzerUser')
+      setError("Geçersiz e-posta veya şifre");
     }
-  }, [user])
-
-  // login: set the user (you could extend this to call an API and store a token)
-  const login = (username) => {
-    setUser({ username })
-  }
-
-  // logout: clear the user
-  const logout = () => {
-    setUser(null)
-  }
-
-  const value = {
-    user,
-    login,
-    logout,
-    isAuthenticated: !!user,
-  }
+  };
 
   return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  )
+    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+      <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-md w-full max-w-sm">
+        <h2 className="text-xl font-bold mb-4 text-center">Giriş Yap</h2>
+
+        {error && <p className="text-red-500 mb-2 text-center">{error}</p>}
+
+        <label className="block mb-2">E-posta</label>
+        <input
+          className="input w-full mb-4"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+
+        <label className="block mb-2">Şifre</label>
+        <input
+          type="password"
+          className="input w-full mb-4"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+
+        <button type="submit" className="w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700">
+          Giriş Yap
+        </button>
+
+        <p className="mt-4 text-sm text-center text-gray-500">
+          Test Kullanıcı: <br />
+          <span className="font-mono">test@demo.com / 123456</span>
+        </p>
+      </form>
+    </div>
+  );
 }
