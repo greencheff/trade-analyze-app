@@ -1,12 +1,27 @@
-import React from 'react';
+import { useState } from 'react';
+import Sidebar from '../components/Sidebar.jsx';
+import Navbar from '../components/Navbar.jsx';
+import WebhookForm from '../components/WebhookForm.jsx';
+import FeedbackList from '../components/FeedbackList.jsx';
 
-const Dashboard = () => {
+export default function Dashboard() {
+  const [feedbacks, setFeedbacks] = useState([]);
+
+  const handleResult = (data) => {
+    setFeedbacks((prev) => [data, ...prev]);
+  };
+
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold">Dashboard Sayfası</h1>
-      <p>Bu sayfa şu anda örnek olarak gösteriliyor.</p>
+    <div className="flex h-screen bg-gray-100">
+      <Sidebar />
+      <div className="flex-1 flex flex-col">
+        <Navbar />
+        <main className="p-6 overflow-auto">
+          <h1 className="text-xl font-bold mb-4">Dashboard</h1>
+          <WebhookForm onResult={handleResult} />
+          <FeedbackList items={feedbacks} />
+        </main>
+      </div>
     </div>
   );
-};
-
-export default Dashboard;
+}
