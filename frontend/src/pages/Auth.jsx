@@ -1,37 +1,36 @@
-import { useState, useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { AuthContext } from '../context/AuthContext.jsx';
+// frontend/src/pages/Auth.jsx
+import React, { useState, useContext } from 'react'
+import { AuthContext } from '../context/AuthContext'
+import { useNavigate } from 'react-router-dom'
 
 export default function Auth() {
-  const { login } = useContext(AuthContext);
-  const [username, setUsername] = useState('');
-  const navigate = useNavigate();
+  const [username, setUsername] = useState('')
+  const { login } = useContext(AuthContext)
+  const navigate = useNavigate()
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    login(username);
-    navigate('/dashboard');
-  };
+  const handleLogin = (e) => {
+    e.preventDefault()
+    if (username.trim()) {
+      login(username)
+      navigate('/dashboard') // giriş sonrası yönlendirme
+    }
+  }
 
   return (
-    <div className="flex items-center justify-center h-screen bg-gray-100">
-      <div className="w-full max-w-md bg-white p-8 rounded shadow">
-        <h2 className="text-2xl font-semibold mb-6">Giriş Yap</h2>
-        <form onSubmit={handleSubmit}>
-          <label className="block mb-2 text-sm">Kullanıcı Adı</label>
-          <input
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            className="w-full border p-2 rounded mb-4"
-            placeholder="Kullanıcı adınızı girin"
-            required
-          />
-          <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded">
-            Giriş Yap
-          </button>
-        </form>
-      </div>
+    <div className="flex justify-center items-center h-screen bg-gray-100">
+      <form onSubmit={handleLogin} className="bg-white p-6 rounded shadow-md">
+        <h2 className="text-xl font-bold mb-4">Giriş Yap</h2>
+        <input
+          type="text"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          placeholder="Kullanıcı adı"
+          className="border p-2 w-full mb-4"
+        />
+        <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded">
+          Giriş
+        </button>
+      </form>
     </div>
-  );
+  )
 }
