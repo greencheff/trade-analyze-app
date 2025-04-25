@@ -5,11 +5,7 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      '/api': {
-        target: 'https://trade-analyze-backend.onrender.com',
-        changeOrigin: true,
-        secure: false
-      }
-    }
-  }
+      '/api': 'https://trade-analyze-backend.onrender.com',
+    },
+  },
 });
