@@ -2,11 +2,27 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Ek özel stiller */
+/* Global özel stiller */
 body {
-  @apply bg-gray-50 text-gray-900;
+  @apply bg-gray-50 text-gray-900 font-sans;
 }
 
-h1, h2, h3 {
-  @apply font-bold;
+button {
+  @apply px-4 py-2 rounded-md bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition;
+}
+
+.card {
+  @apply bg-white shadow-md rounded-xl p-4;
+}
+
+.section-title {
+  @apply text-2xl font-bold mb-4;
+}
+
+.input {
+  @apply border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500;
+}
+
+.link {
+  @apply text-indigo-600 hover:underline cursor-pointer;
 }
