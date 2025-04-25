@@ -3,7 +3,7 @@ uvicorn[standard]
 pandas
 sqlalchemy
 databases
-+ pydantic<2
+pydantic<2
 requests
 redis
 ccxt
