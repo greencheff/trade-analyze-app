@@ -21,7 +21,7 @@ export default function Navbar() {
           />
         </svg>
         <span className="font-semibold text-gray-700">
-          Hoşgeldiniz{user ? `, ${user}` : ''}
+          Hoşgeldiniz{user ? `, ${user.username || user.email || ''}` : ''}
         </span>
       </div>
       <button
@@ -31,5 +31,5 @@ export default function Navbar() {
         Çıkış
       </button>
     </header>
-)
+  )
 }
