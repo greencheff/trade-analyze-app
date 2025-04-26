@@ -1,9 +1,6 @@
-# backend/app/routers/analyze.py
-
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import List
-import numpy as np
 
 router = APIRouter()
 
@@ -19,43 +16,41 @@ class AnalyzeRequest(BaseModel):
     interval: str
     candles: List[Candle]
 
-def calculate_rsi(prices: List[float], period: int = 14) -> float:
-    if len(prices) < period:
-        return 50.0
-    deltas = np.diff(prices)
-    seed = deltas[:period]
-    up = seed[seed > 0].sum() / period
-    down = -seed[seed < 0].sum() / period
-    rs = up / down if down != 0 else 0
-    rsi = 100 - (100 / (1 + rs))
-    return rsi
+@router.post("/analyze")
+async def analyze_data(request: AnalyzeRequest):
+    try:
+        # Şu anlık temel bir kontrol yapıyoruz (örneğin mum sayısını kontrol et)
+        if len(request.candles) < 2:
+            raise HTTPException(status_code=400, detail="Yeterli mum verisi yok.")
 
-def calculate_macd(prices: List[float]) -> float:
-    exp1 = np.array(prices[-12:]).mean()
-    exp2 = np.array(prices[-26:]).mean()
-    return exp1 - exp2
+        last_candle = request.candles[-1]
+        previous_candle = request.candles[-2]
 
-@router.post("/api/analyze")
-async def analyze(request: AnalyzeRequest):
-    closes = [candle.close for candle in request.candles]
+        feedback = []
 
-    if len(closes) < 26:
-        raise HTTPException(status_code=400, detail="Yetersiz mum verisi gönderildi.")
+        # Basit bir örnek analiz: son kapanış önceki açılıştan yüksekse
+        if last_candle.close > previous_candle.open:
+            feedback.append({
+                "event_id": "trend_up",
+                "summary": "Fiyat artışı gözlendi.",
+                "score": 1,
+                "symbol": request.symbol,
+                "interval": request.interval,
+                "macd": "positive",
+                "rsi": "strong"
+            })
+        else:
+            feedback.append({
+                "event_id": "trend_down",
+                "summary": "Fiyat düşüşü gözlendi.",
+                "score": -1,
+                "symbol": request.symbol,
+                "interval": request.interval,
+                "macd": "negative",
+                "rsi": "weak"
+            })
 
-    rsi = calculate_rsi(closes)
-    macd = calculate_macd(closes)
+        return {"status": "ok", "feedback": feedback}
 
-    if rsi < 30 and macd > 0:
-        feedback = "Momentum Long Sinyali: RSI düşük, MACD pozitif."
-    elif rsi > 70 and macd < 0:
-        feedback = "Momentum Short Sinyali: RSI yüksek, MACD negatif."
-    else:
-        feedback = "Belirgin bir trade sinyali yok."
-
-    return {
-        "symbol": request.symbol,
-        "interval": request.interval,
-        "rsi": round(rsi, 2),
-        "macd": round(macd, 2),
-        "feedback": feedback
-    }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
