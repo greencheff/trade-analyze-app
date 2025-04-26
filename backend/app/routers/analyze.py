@@ -26,35 +26,35 @@ def calculate_rsi(closes, period=14):
 def calculate_ema(closes, period=14):
     if len(closes) < period:
         return None
-    sma = sum(closes[:period]) / period
-    multiplier = 2 / (period + 1)
-    ema = sma
-    for close in closes[period:]:
-        ema = (close - ema) * multiplier + ema
+    k = 2 / (period + 1)
+    ema = closes[0]
+    for price in closes[1:]:
+        ema = price * k + ema * (1 - k)
     return round(ema, 2)
 
-def calculate_macd(closes):
-    ema_12 = calculate_ema(closes, 12)
-    ema_26 = calculate_ema(closes, 26)
-    if ema_12 is None or ema_26 is None:
+def calculate_macd(closes, short_period=12, long_period=26):
+    if len(closes) < long_period:
         return None
-    macd = ema_12 - ema_26
-    return round(macd, 2)
+    short_ema = calculate_ema(closes[-short_period:], short_period)
+    long_ema = calculate_ema(closes[-long_period:], long_period)
+    if short_ema is None or long_ema is None:
+        return None
+    return round(short_ema - long_ema, 2)
 
-def calculate_stochastic_oscillator(closes, highs, lows, period=14):
-    if len(closes) < period or len(highs) < period or len(lows) < period:
+def calculate_stochastic_k(highs, lows, closes):
+    if not highs or not lows or not closes:
         return None
-    highest_high = max(highs[-period:])
-    lowest_low = min(lows[-period:])
+    highest_high = max(highs)
+    lowest_low = min(lows)
     if highest_high == lowest_low:
         return 0
-    k = (closes[-1] - lowest_low) / (highest_high - lowest_low) * 100
+    k = ((closes[-1] - lowest_low) / (highest_high - lowest_low)) * 100
     return round(k, 2)
 
 def calculate_adx(highs, lows, closes, period=14):
-    if len(highs) < period or len(lows) < period or len(closes) < period:
+    if len(highs) < period + 1 or len(lows) < period + 1 or len(closes) < period + 1:
         return None
-    return round(25.0, 2)  # Placeholder ADX değeri
+    return 20.0  # Şimdilik sabit değer, geliştirmeye açık
 
 @router.post("/api/analyze")
 async def analyze_data(request: Request):
@@ -95,7 +95,7 @@ async def analyze_data(request: Request):
         rsi_value = calculate_rsi(closes, period=rsi_period)
         ema_value = calculate_ema(closes, period=14)
         macd_value = calculate_macd(closes)
-        stochastic_value = calculate_stochastic_oscillator(closes, highs, lows, period=14)
+        stochastic_k_value = calculate_stochastic_k(highs, lows, closes)
         adx_value = calculate_adx(highs, lows, closes, period=14)
 
         return JSONResponse(content={
@@ -114,7 +114,7 @@ async def analyze_data(request: Request):
                 "rsi_period": rsi_period,
                 "ema_value": ema_value,
                 "macd_value": macd_value,
-                "stochastic_value": stochastic_value,
+                "stochastic_k_value": stochastic_k_value,
                 "adx_value": adx_value
             }
         })
