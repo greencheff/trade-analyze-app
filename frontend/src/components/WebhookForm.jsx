@@ -1,118 +1,107 @@
 import React, { useState } from "react";
+import axios from "axios";
 
-export default function WebhookForm() {
-  const [symbol, setSymbol] = useState("BTCUSDT");
-  const [interval, setInterval] = useState("1m");
+function WebhookForm() {
+  const [symbol, setSymbol] = useState("");
+  const [interval, setInterval] = useState("");
   const [candles, setCandles] = useState("");
   const [rsiPeriod, setRsiPeriod] = useState(14);
-  const [result, setResult] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState(null);
 
   const handleAnalyze = async () => {
-    setLoading(true);
     try {
-      const response = await fetch("https://trade-analyze-backend.onrender.com/api/analyze", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          symbol,
-          interval,
-          candles: JSON.parse(candles),
-          rsi_period: rsiPeriod,
-        }),
+      const parsedCandles = JSON.parse(candles);
+      const response = await axios.post("https://trade-analyze-backend.onrender.com/api/analyze", {
+        symbol,
+        interval,
+        rsi_period: rsiPeriod,
+        candles: parsedCandles,
       });
-
-      const data = await response.json();
-      setResult(data);
+      setAnalysisResult(response.data);
     } catch (error) {
-      console.error("Hata:", error);
+      console.error("Analyze error:", error);
+      setAnalysisResult({ error: "Sunucu hatası veya yanlış veri formatı" });
     }
-    setLoading(false);
   };
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
-      <h2 className="text-2xl font-bold mb-6 text-center">📊 Trade Analiz Dashboard</h2>
+    <div className="flex flex-col p-6">
+      <h1 className="text-2xl font-bold text-center mb-6">📈 Trade Analiz Dashboard</h1>
 
-      {/* Form */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+      <div className="grid grid-cols-2 gap-4 mb-4">
         <input
           type="text"
+          placeholder="Symbol (örnek: BTCUSDT)"
+          className="border rounded p-2"
           value={symbol}
           onChange={(e) => setSymbol(e.target.value)}
-          placeholder="Symbol (BTCUSDT)"
-          className="p-3 border rounded shadow"
         />
         <input
           type="text"
+          placeholder="Interval (örnek: 1m, 5m, 1h)"
+          className="border rounded p-2"
           value={interval}
           onChange={(e) => setInterval(e.target.value)}
-          placeholder="Interval (1m, 1h...)"
-          className="p-3 border rounded shadow"
         />
+      </div>
+
+      <div className="grid grid-cols-2 gap-4 mb-4">
         <select
+          className="border rounded p-2"
           value={rsiPeriod}
           onChange={(e) => setRsiPeriod(parseInt(e.target.value))}
-          className="p-3 border rounded shadow"
         >
-          <option value={9}>RSI Period: 9</option>
           <option value={14}>RSI Period: 14 (Standart)</option>
+          <option value={7}>RSI Period: 7</option>
           <option value={21}>RSI Period: 21</option>
         </select>
+
         <textarea
+          placeholder="Candles JSON"
+          className="border rounded p-2 h-32"
           value={candles}
           onChange={(e) => setCandles(e.target.value)}
-          rows={5}
-          className="p-3 border rounded shadow font-mono"
-          placeholder='[
-{ "open": 100, "high": 110, "low": 90, "close": 105, "volume": 1500 },
-{ "open": 105, "high": 115, "low": 100, "close": 110, "volume": 1600 }
-]'
         />
       </div>
 
       <button
         onClick={handleAnalyze}
-        className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded shadow text-lg mb-8"
-        disabled={loading}
+        className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-6"
       >
-        {loading ? "Analiz Ediliyor..." : "Analiz Et"}
+        Analiz Et
       </button>
 
-      {/* Analiz Sonuçları */}
-      {result && result.analysis && (
-        <div className="space-y-8">
-          {/* Özet Kart */}
-          <div className="bg-gray-100 p-6 rounded shadow">
-            <h3 className="text-xl font-bold mb-4">🔎 Özet Analiz</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div className="p-4 bg-white rounded shadow hover:shadow-lg"><p className="font-semibold">Symbol</p><p>{result.symbol}</p></div>
-              <div className="p-4 bg-white rounded shadow hover:shadow-lg"><p className="font-semibold">Interval</p><p>{result.interval}</p></div>
-              <div className="p-4 bg-white rounded shadow hover:shadow-lg"><p className="font-semibold">Veri Sayısı</p><p>{result.candles_count}</p></div>
-              <div className="p-4 bg-white rounded shadow hover:shadow-lg"><p className="font-semibold">Ortalama Kapanış</p><p>{result.analysis.average_close}</p></div>
-              <div className="p-4 bg-white rounded shadow hover:shadow-lg"><p className="font-semibold">Ortalama Hacim</p><p>{result.analysis.average_volume}</p></div>
-              <div className="p-4 bg-white rounded shadow hover:shadow-lg"><p className="font-semibold">En Yüksek Fiyat</p><p>{result.analysis.highest_price}</p></div>
-              <div className="p-4 bg-white rounded shadow hover:shadow-lg"><p className="font-semibold">En Düşük Fiyat</p><p>{result.analysis.lowest_price}</p></div>
-              <div className="p-4 bg-white rounded shadow hover:shadow-lg"><p className="font-semibold">Trend Yönü</p><p>{result.analysis.trend_direction}</p></div>
-              <div className="p-4 bg-white rounded shadow hover:shadow-lg"><p className="font-semibold">Trend Gücü (%)</p><p>{result.analysis.trend_strength_percent}%</p></div>
-            </div>
+      {analysisResult && analysisResult.status === "ok" && (
+        <div className="grid grid-cols-2 gap-4">
+          <div className="p-4 border rounded shadow">
+            <h2 className="text-xl font-bold mb-2">🔎 Özet Analiz</h2>
+            <p><strong>Symbol:</strong> {analysisResult.symbol}</p>
+            <p><strong>Interval:</strong> {analysisResult.interval}</p>
+            <p><strong>Veri Sayısı:</strong> {analysisResult.candles_count}</p>
+            <p><strong>Ortalama Kapanış:</strong> {analysisResult.analysis.average_close}</p>
+            <p><strong>Ortalama Hacim:</strong> {analysisResult.analysis.average_volume}</p>
+            <p><strong>En Yüksek Fiyat:</strong> {analysisResult.analysis.highest_price}</p>
+            <p><strong>En Düşük Fiyat:</strong> {analysisResult.analysis.lowest_price}</p>
+            <p><strong>Trend Yönü:</strong> {analysisResult.analysis.trend_direction}</p>
+            <p><strong>Trend Gücü (%):</strong> {analysisResult.analysis.trend_strength_percent}</p>
           </div>
 
-          {/* İleri Düzey Teknik Kartlar */}
-          <div className="bg-gray-100 p-6 rounded shadow">
-            <h3 className="text-xl font-bold mb-4">⚡ İleri Düzey Analiz</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div className="p-4 bg-white rounded shadow hover:shadow-lg"><p className="font-semibold">RSI Değeri</p><p>{result.analysis.rsi_value}</p></div>
-              <div className="p-4 bg-white rounded shadow hover:shadow-lg"><p className="font-semibold">EMA (14)</p><p>{result.analysis.ema_value}</p></div>
-              <div className="p-4 bg-white rounded shadow hover:shadow-lg"><p className="font-semibold">MACD</p><p>{result.analysis.macd_value}</p></div>
-              <div className="p-4 bg-white rounded shadow hover:shadow-lg"><p className="font-semibold">Stochastic %K</p><p>{result.analysis.stochastic_k_value}</p></div>
-              <div className="p-4 bg-white rounded shadow hover:shadow-lg"><p className="font-semibold">ADX Değeri</p><p>{result.analysis.adx_value}</p></div>
-            </div>
+          <div className="p-4 border rounded shadow">
+            <h2 className="text-xl font-bold mb-2">⚡ İleri Düzey Analiz</h2>
+            <p><strong>RSI Değeri:</strong> {analysisResult.analysis.rsi_value}</p>
+            <p><strong>EMA (14):</strong> {analysisResult.analysis.ema_value}</p>
+            <p><strong>MACD:</strong> {analysisResult.analysis.macd_value}</p>
+            <p><strong>Stochastic %K:</strong> {analysisResult.analysis.stochastic_k_value}</p>
+            <p><strong>ADX Değeri:</strong> {analysisResult.analysis.adx_value}</p>
           </div>
         </div>
+      )}
+
+      {analysisResult && analysisResult.error && (
+        <div className="text-red-600 font-bold">{analysisResult.error}</div>
       )}
     </div>
   );
 }
+
+export default WebhookForm;
