@@ -7,7 +7,6 @@ import numpy as np
 
 router = APIRouter()
 
-# --- Request Body için Pydantic Modeli ---
 class Candle(BaseModel):
     open: float
     high: float
@@ -20,10 +19,9 @@ class AnalyzeRequest(BaseModel):
     interval: str
     candles: List[Candle]
 
-# --- Analiz Fonksiyonları ---
 def calculate_rsi(prices: List[float], period: int = 14) -> float:
     if len(prices) < period:
-        return 50.0  # Yetersiz veri varsa nötr RSI dön
+        return 50.0
     deltas = np.diff(prices)
     seed = deltas[:period]
     up = seed[seed > 0].sum() / period
@@ -37,7 +35,6 @@ def calculate_macd(prices: List[float]) -> float:
     exp2 = np.array(prices[-26:]).mean()
     return exp1 - exp2
 
-# --- API Endpoint ---
 @router.post("/api/analyze")
 async def analyze(request: AnalyzeRequest):
     closes = [candle.close for candle in request.candles]
@@ -48,7 +45,6 @@ async def analyze(request: AnalyzeRequest):
     rsi = calculate_rsi(closes)
     macd = calculate_macd(closes)
 
-    # Basit Strateji Kuralları
     if rsi < 30 and macd > 0:
         feedback = "Momentum Long Sinyali: RSI düşük, MACD pozitif."
     elif rsi > 70 and macd < 0:
