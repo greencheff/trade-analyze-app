@@ -1,8 +1,32 @@
-import statistics
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
 router = APIRouter()
+
+# Yardımcı RSI hesaplama fonksiyonu
+def calculate_rsi(closes, period=14):
+    if len(closes) < period:
+        return None
+
+    gains = []
+    losses = []
+
+    for i in range(1, period + 1):
+        delta = closes[i] - closes[i - 1]
+        if delta >= 0:
+            gains.append(delta)
+        else:
+            losses.append(abs(delta))
+
+    average_gain = sum(gains) / period
+    average_loss = sum(losses) / period
+
+    if average_loss == 0:
+        return 100
+
+    rs = average_gain / average_loss
+    rsi = 100 - (100 / (1 + rs))
+    return round(rsi, 2)
 
 @router.post("/api/analyze")
 async def analyze_data(request: Request):
@@ -10,6 +34,7 @@ async def analyze_data(request: Request):
         data = await request.json()
         symbol = data.get("symbol", "Unknown")
         interval = data.get("interval", "Unknown")
+        rsi_period = data.get("rsi_period", 14)
         candles = data.get("candles", [])
 
         if not candles or not isinstance(candles, list):
@@ -46,6 +71,9 @@ async def analyze_data(request: Request):
         except ZeroDivisionError:
             trend_strength = 0.0
 
+        # RSI hesaplama
+        rsi_value = calculate_rsi(closes, period=rsi_period)
+
         return JSONResponse(content={
             "status": "ok",
             "symbol": symbol,
@@ -57,6 +85,8 @@ async def analyze_data(request: Request):
             "lowest_price": lowest_price,
             "trend_direction": trend_direction,
             "trend_strength_percent": trend_strength,
+            "rsi_value": rsi_value,
+            "rsi_period": rsi_period
         })
 
     except Exception as e:
