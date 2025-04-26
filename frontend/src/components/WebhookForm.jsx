@@ -4,6 +4,7 @@ export default function WebhookForm() {
   const [symbol, setSymbol] = useState("BTCUSDT");
   const [interval, setInterval] = useState("1m");
   const [candles, setCandles] = useState("");
+  const [rsiPeriod, setRsiPeriod] = useState(14);
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -19,7 +20,7 @@ export default function WebhookForm() {
           symbol,
           interval,
           candles: JSON.parse(candles),
-          rsi_period: 14, // İstersen burada açılır menü ekleriz (şimdilik sabit 14)
+          rsi_period: rsiPeriod,
         }),
       });
 
@@ -59,6 +60,19 @@ export default function WebhookForm() {
           onChange={(e) => setInterval(e.target.value)}
           className="w-full p-2 border rounded"
         />
+      </div>
+
+      <div className="mb-4">
+        <label className="block mb-1 font-semibold">RSI Periyodu</label>
+        <select
+          value={rsiPeriod}
+          onChange={(e) => setRsiPeriod(parseInt(e.target.value))}
+          className="w-full p-2 border rounded"
+        >
+          <option value={9}>9</option>
+          <option value={14}>14 (Standart)</option>
+          <option value={21}>21</option>
+        </select>
       </div>
 
       <div className="mb-4">
