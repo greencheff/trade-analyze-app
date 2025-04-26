@@ -15,7 +15,7 @@ export default function WebhookForm({ onResult }) {
     setError(null)
     try {
       const payload = { symbol, interval, candles: JSON.parse(candles) }
-      const resp = await fetch('/api/analyze', {   // BURASI DÜZELTİLDİ
+      const resp = await fetch('https://trade-analyze-backend.onrender.com/api/analyze', {   // BURASI GÜNCELLENDİ
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
