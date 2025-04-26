@@ -1,19 +1,19 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import analyze
+from routers import analyze
 
 app = FastAPI()
 
-# CORS ayarları
+# CORS ayarları (frontend ile backend iletişimi için gerekli)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Geliştirme için açık tuttuk
+    allow_origins=["*"],  # Prod ortamında buraya spesifik site adresi yazılır
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Router ekle
+# Router'ı ekle
 app.include_router(analyze.router)
 
 @app.get("/")
