@@ -1,76 +1,97 @@
-import { useState } from 'react'
+import React, { useState } from "react";
 
-export default function WebhookForm({ onResult }) {
-  const [symbol, setSymbol] = useState('BTCUSDT')
-  const [interval, setInterval] = useState('1m')
-  const [candles, setCandles] = useState(
-    '[{"open":0,"high":0,"low":0,"close":0,"volume":0}]'
-  )
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
+function WebhookForm() {
+  const [symbol, setSymbol] = useState("BTCUSDT");
+  const [interval, setInterval] = useState("1m");
+  const [candles, setCandles] = useState(`[{"open":100,"high":110,"low":90,"close":105,"volume":1500}]`);
+  const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setLoading(true)
-    setError(null)
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+    setResult(null);
+
     try {
-      const payload = { 
-        symbol, 
-        interval, 
-        candles: JSON.parse(candles) // BURASI DÜZELTİLDİ
+      const response = await fetch("https://trade-analyze-backend.onrender.com/api/analyze", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          symbol,
+          interval,
+          candles: JSON.parse(candles),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Sunucudan hata alındı");
       }
-      const resp = await fetch('https://trade-analyze-backend.onrender.com/api/analyze', { // URL DÜZELTİLDİ
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      })
-      if (!resp.ok) throw new Error('Sunucu hatası')
-      const data = await resp.json()
-      onResult(data)
+
+      const data = await response.json();
+      setResult(data);
     } catch (err) {
-      setError(err.message)
+      console.error(err);
+      setError("Sunucuya bağlanılamadı veya hata oluştu.");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white p-4 rounded shadow mb-6">
-      <div className="mb-2">
-        <label className="block text-sm font-medium mb-1">Symbol</label>
-        <input
-          value={symbol}
-          onChange={(e) => setSymbol(e.target.value)}
-          className="w-full border p-2 rounded"
-        />
+    <div className="p-4">
+      <h2 className="text-2xl font-bold mb-4">Dashboard</h2>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block mb-1">Symbol</label>
+          <input
+            type="text"
+            value={symbol}
+            onChange={(e) => setSymbol(e.target.value)}
+            className="w-full p-2 border rounded"
+          />
+        </div>
+        <div>
+          <label className="block mb-1">Interval</label>
+          <input
+            type="text"
+            value={interval}
+            onChange={(e) => setInterval(e.target.value)}
+            className="w-full p-2 border rounded"
+          />
+        </div>
+        <div>
+          <label className="block mb-1">Candles (JSON)</label>
+          <textarea
+            value={candles}
+            onChange={(e) => setCandles(e.target.value)}
+            className="w-full p-2 border rounded"
+            rows="6"
+          />
+        </div>
+        <button
+          type="submit"
+          disabled={loading}
+          className="bg-blue-500 text-white px-4 py-2 rounded"
+        >
+          {loading ? "Analiz Ediliyor..." : "Analiz Et"}
+        </button>
+      </form>
+
+      <div className="mt-6">
+        {error && <div className="text-red-500">{error}</div>}
+        {result && (
+          <div className="p-4 mt-4 border rounded bg-gray-100">
+            <h3 className="text-xl font-semibold mb-2">Analiz Sonucu:</h3>
+            <pre className="text-sm">{JSON.stringify(result, null, 2)}</pre>
+          </div>
+        )}
       </div>
-      <div className="mb-2">
-        <label className="block text-sm font-medium mb-1">Interval</label>
-        <input
-          value={interval}
-          onChange={(e) => setInterval(e.target.value)}
-          className="w-full border p-2 rounded"
-        />
-      </div>
-      <div className="mb-2">
-        <label className="block text-sm font-medium mb-1">
-          Candles (JSON)
-        </label>
-        <textarea
-          rows={4}
-          value={candles}
-          onChange={(e) => setCandles(e.target.value)}
-          className="w-full border p-2 rounded font-mono text-sm"
-        />
-      </div>
-      {error && <p className="text-red-600 mb-2">{error}</p>}
-      <button
-        type="submit"
-        disabled={loading}
-        className="bg-blue-600 text-white px-4 py-2 rounded"
-      >
-        {loading ? 'Gönderiliyor...' : 'Analiz Et'}
-      </button>
-    </form>
-  )
+    </div>
+  );
 }
+
+export default WebhookForm;
