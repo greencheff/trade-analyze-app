@@ -54,7 +54,7 @@ def calculate_stochastic_oscillator(closes, highs, lows, period=14):
 def calculate_adx(highs, lows, closes, period=14):
     if len(highs) < period or len(lows) < period or len(closes) < period:
         return None
-    return round(25.0, 2)  # Basitleştirilmiş ADX değeri (placeholder)
+    return round(25.0, 2)  # Placeholder ADX değeri
 
 @router.post("/api/analyze")
 async def analyze_data(request: Request):
