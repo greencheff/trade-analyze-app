@@ -6,9 +6,13 @@ import FeedbackList from '../components/FeedbackList.jsx';
 
 export default function Dashboard() {
   const [feedbacks, setFeedbacks] = useState([]);
+  const [strategies, setStrategies] = useState([]);
 
   const handleResult = (data) => {
     setFeedbacks((prev) => [data, ...prev]);
+    if (data?.strategies) {
+      setStrategies(data.strategies);
+    }
   };
 
   return (
@@ -18,8 +22,30 @@ export default function Dashboard() {
         <Navbar />
         <main className="p-6 overflow-auto">
           <h1 className="text-xl font-bold mb-4">Dashboard</h1>
+
+          {/* Form ve Sonuçlar */}
           <WebhookForm onResult={handleResult} />
           <FeedbackList items={feedbacks} />
+
+          {/* Strateji Sonuçları */}
+          {strategies.length > 0 && (
+            <div className="mt-8">
+              <h2 className="text-2xl font-bold mb-4">Strateji Sonuçları</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {strategies.map((strategy, index) => (
+                  <div
+                    key={index}
+                    className={`p-4 rounded-lg shadow ${
+                      strategy.signal ? 'bg-green-100' : 'bg-red-100'
+                    }`}
+                  >
+                    <h3 className="text-lg font-semibold">{strategy.name}</h3>
+                    <p className="text-sm mt-1">{strategy.explanation}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </main>
       </div>
     </div>
