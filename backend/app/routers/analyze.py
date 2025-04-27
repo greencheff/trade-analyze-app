@@ -1,60 +1,63 @@
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
+import pandas as pd
+
+from indicators import (
+    calculate_rsi,
+    calculate_macd,
+    calculate_ema,
+    calculate_bollinger_bands,
+    calculate_atr,
+    calculate_stochastic_rsi,
+    calculate_adx,
+    calculate_cci,
+    calculate_vwap,
+    calculate_obv,
+)
+from strategy_matcher import (
+    momentum_long_signal,
+    mean_reversion_short_signal,
+    trend_following_long_signal,
+    volatility_breakout_signal,
+    stochastic_rsi_reversal_signal,
+    adx_trend_strength_signal,
+    cci_reversal_signal,
+    vwap_trend_follow_signal,
+    obv_breakout_signal,
+    macd_zero_cross_signal,
+)
 
 router = APIRouter()
 
-# Yardımcı hesaplama fonksiyonları
-def calculate_rsi(closes, period=14):
-    if len(closes) < period:
-        return None
-    gains = []
-    losses = []
-    for i in range(1, period + 1):
-        delta = closes[i] - closes[i - 1]
-        if delta >= 0:
-            gains.append(delta)
-        else:
-            losses.append(abs(delta))
-    average_gain = sum(gains) / period
-    average_loss = sum(losses) / period
-    if average_loss == 0:
-        return 100
-    rs = average_gain / average_loss
-    rsi = 100 - (100 / (1 + rs))
-    return round(rsi, 2)
-
-def calculate_ema(closes, period=14):
-    if len(closes) < period:
-        return None
-    k = 2 / (period + 1)
-    ema = closes[0]
-    for price in closes[1:]:
-        ema = price * k + ema * (1 - k)
-    return round(ema, 2)
-
-def calculate_macd(closes, short_period=12, long_period=26):
-    if len(closes) < long_period:
-        return None
-    short_ema = calculate_ema(closes[-short_period:], short_period)
-    long_ema = calculate_ema(closes[-long_period:], long_period)
-    if short_ema is None or long_ema is None:
-        return None
-    return round(short_ema - long_ema, 2)
-
-def calculate_stochastic_k(highs, lows, closes):
-    if not highs or not lows or not closes:
-        return None
-    highest_high = max(highs)
-    lowest_low = min(lows)
-    if highest_high == lowest_low:
-        return 0
-    k = ((closes[-1] - lowest_low) / (highest_high - lowest_low)) * 100
-    return round(k, 2)
-
-def calculate_adx(highs, lows, closes, period=14):
-    if len(highs) < period + 1 or len(lows) < period + 1 or len(closes) < period + 1:
-        return None
-    return 20.0  # Şimdilik sabit değer, geliştirmeye açık
+def run_all_strategies(df):
+    strategies = []
+    all_strategies = {
+        "Momentum Long": momentum_long_signal,
+        "Mean Reversion Short": mean_reversion_short_signal,
+        "Trend Following Long": trend_following_long_signal,
+        "Volatility Breakout": volatility_breakout_signal,
+        "Stochastic RSI Reversal": stochastic_rsi_reversal_signal,
+        "ADX Trend Strength": adx_trend_strength_signal,
+        "CCI Reversal": cci_reversal_signal,
+        "VWAP Trend Follow": vwap_trend_follow_signal,
+        "OBV Breakout": obv_breakout_signal,
+        "MACD Zero Cross": macd_zero_cross_signal,
+    }
+    for name, func in all_strategies.items():
+        try:
+            result, explanation = func(df)
+            strategies.append({
+                "name": name,
+                "signal": result,
+                "explanation": explanation
+            })
+        except Exception as e:
+            strategies.append({
+                "name": name,
+                "signal": False,
+                "explanation": f"Hata: {str(e)}"
+            })
+    return strategies
 
 @router.post("/api/analyze")
 async def analyze_data(request: Request):
@@ -68,16 +71,18 @@ async def analyze_data(request: Request):
         if not candles or not isinstance(candles, list):
             return JSONResponse(status_code=400, content={"error": "Invalid candle data"})
 
-        closes = [candle.get("close") for candle in candles if candle.get("close") is not None]
-        volumes = [candle.get("volume") for candle in candles if candle.get("volume") is not None]
-        highs = [candle.get("high") for candle in candles if candle.get("high") is not None]
-        lows = [candle.get("low") for candle in candles if candle.get("low") is not None]
+        df = pd.DataFrame(candles)
 
-        if not closes or not volumes or not highs or not lows:
+        if df.empty or not all(col in df.columns for col in ["open", "high", "low", "close", "volume"]):
             return JSONResponse(status_code=400, content={"error": "Missing required fields in candles"})
 
-        average_close = sum(closes) / len(closes)
-        average_volume = sum(volumes) / len(volumes)
+        closes = df['close'].tolist()
+        volumes = df['volume'].tolist()
+        highs = df['high'].tolist()
+        lows = df['low'].tolist()
+
+        average_close = round(sum(closes) / len(closes), 2)
+        average_volume = round(sum(volumes) / len(volumes), 2)
         highest_price = max(highs)
         lowest_price = min(lows)
 
@@ -92,11 +97,13 @@ async def analyze_data(request: Request):
         except ZeroDivisionError:
             trend_strength = 0.0
 
-        rsi_value = calculate_rsi(closes, period=rsi_period)
-        ema_value = calculate_ema(closes, period=14)
-        macd_value = calculate_macd(closes)
-        stochastic_k_value = calculate_stochastic_k(highs, lows, closes)
-        adx_value = calculate_adx(highs, lows, closes, period=14)
+        rsi_value = calculate_rsi(df, period=rsi_period).iloc[-1]
+        ema_value = calculate_ema(df, period=14).iloc[-1]
+        macd_value = calculate_macd(df)[0].iloc[-1]
+        stochastic_k_value = calculate_stochastic_rsi(df).iloc[-1]
+        adx_value = calculate_adx(df).iloc[-1]
+
+        strategy_results = run_all_strategies(df)
 
         return JSONResponse(content={
             "status": "ok",
@@ -104,19 +111,19 @@ async def analyze_data(request: Request):
             "interval": interval,
             "candles_count": len(candles),
             "analysis": {
-                "average_close": round(average_close, 2),
-                "average_volume": round(average_volume, 2),
+                "average_close": average_close,
+                "average_volume": average_volume,
                 "highest_price": highest_price,
                 "lowest_price": lowest_price,
                 "trend_direction": trend_direction,
                 "trend_strength_percent": trend_strength,
-                "rsi_value": rsi_value,
-                "rsi_period": rsi_period,
-                "ema_value": ema_value,
-                "macd_value": macd_value,
-                "stochastic_k_value": stochastic_k_value,
-                "adx_value": adx_value
-            }
+                "rsi_value": round(rsi_value, 2),
+                "ema_value": round(ema_value, 2),
+                "macd_value": round(macd_value, 2),
+                "stochastic_k_value": round(stochastic_k_value, 2),
+                "adx_value": round(adx_value, 2),
+            },
+            "strategies": strategy_results
         })
 
     except Exception as e:
