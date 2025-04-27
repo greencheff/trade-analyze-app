@@ -119,4 +119,13 @@ async def analyze_data(request: Request):
                 "trend_direction": trend_direction,
                 "trend_strength_percent": trend_strength,
                 "rsi_value": round(rsi_value, 2),
-                "ema_value": rou_
+                "ema_value": round(ema_value, 2),
+                "macd_value": round(macd_value, 2),
+                "stochastic_k_value": round(stochastic_k_value, 2),
+                "adx_value": round(adx_value, 2),
+            },
+            "strategies": strategy_results
+        })
+
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
