@@ -2,7 +2,7 @@
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import analyze  # düzeltildi!
+from app.routers import analyze  # Doğru import bu şekilde!
 
 app = FastAPI()
 
