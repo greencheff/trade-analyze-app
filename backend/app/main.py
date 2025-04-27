@@ -2,7 +2,7 @@
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import analyze
+from routers import analyze  # düzeltildi!
 
 app = FastAPI()
 
