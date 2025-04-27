@@ -2,7 +2,7 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 import pandas as pd
 
-from indicators import (
+from app.indicators import (
     calculate_rsi,
     calculate_macd,
     calculate_ema,
@@ -14,7 +14,8 @@ from indicators import (
     calculate_vwap,
     calculate_obv,
 )
-from strategy_matcher import (
+
+from app.strategy_matcher import (
     momentum_long_signal,
     mean_reversion_short_signal,
     trend_following_long_signal,
@@ -118,13 +119,4 @@ async def analyze_data(request: Request):
                 "trend_direction": trend_direction,
                 "trend_strength_percent": trend_strength,
                 "rsi_value": round(rsi_value, 2),
-                "ema_value": round(ema_value, 2),
-                "macd_value": round(macd_value, 2),
-                "stochastic_k_value": round(stochastic_k_value, 2),
-                "adx_value": round(adx_value, 2),
-            },
-            "strategies": strategy_results
-        })
-
-    except Exception as e:
-        return JSONResponse(status_code=500, content={"error": str(e)})
+                "ema_value": rou_
