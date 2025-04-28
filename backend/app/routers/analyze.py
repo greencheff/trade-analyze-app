@@ -1,5 +1,6 @@
 # backend/app/routes/analyze.py
 
+import traceback
 from fastapi import APIRouter, Request, HTTPException
 import pandas as pd
 from app.indicators import *
@@ -10,6 +11,7 @@ router = APIRouter()
 @router.post("/analyze")
 async def analyze_data(request: Request):
     try:
+        # İstek gövdesinden candle verisini al
         body = await request.json()
         candles = body.get("candles", [])
 
@@ -24,7 +26,6 @@ async def analyze_data(request: Request):
 
         # İndikatör hesaplamaları
         indicator_values = {}
-
         try:
             indicator_values["rsi"] = calculate_rsi(df, 14).iloc[-1]
             indicator_values["macd"] = calculate_macd(df)[0].iloc[-1]
@@ -34,8 +35,10 @@ async def analyze_data(request: Request):
             indicator_values["average_volume"] = average_volume(df).iloc[-1]
         except Exception as e:
             print(f"İndikatör hesaplama hatası: {e}")
+            traceback.print_exc()
             raise HTTPException(status_code=500, detail=f"İndikatör hesaplama hatası: {str(e)}")
 
+        # Trend yönü
         trend_direction = "Yatay"
         if indicator_values["trend_strength"] >= 65:
             trend_direction = "Yukarı"
@@ -47,8 +50,10 @@ async def analyze_data(request: Request):
             strategies = run_all_strategies(df)
         except Exception as e:
             print(f"Strateji hesaplama hatası: {e}")
+            traceback.print_exc()
             strategies = []
 
+        # Sonuçları döndür
         return {
             "status": "ok",
             "summary": {
@@ -64,4 +69,5 @@ async def analyze_data(request: Request):
 
     except Exception as e:
         print(f"Genel analiz hatası: {e}")
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Genel analiz hatası: {str(e)}")
