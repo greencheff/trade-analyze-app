@@ -1,3 +1,4 @@
+// src/api/binanceAnalyze.js
 
 export async function analyzeSymbol(symbol, interval) {
   try {
@@ -75,10 +76,40 @@ export async function analyzeSymbol(symbol, interval) {
 
     const macdHistogram = latestMacd - latestSignal;
 
-    // Sonuçlar
+    // RSI Yorumu
+    let rsiComment = '';
+    if (rsi < 30) {
+      rsiComment = `RSI ${rsi.toFixed(2)} (Aşırı Satım) → Alım fırsatı olabilir.`;
+    } else if (rsi > 70) {
+      rsiComment = `RSI ${rsi.toFixed(2)} (Aşırı Alım) → Dikkatli olunmalı.`;
+    } else {
+      rsiComment = `RSI ${rsi.toFixed(2)} (Nötr)`;
+    }
+
+    // MACD Yorumu
+    let macdComment = '';
+    if (macdHistogram > 0) {
+      macdComment = `MACD ${macdHistogram.toFixed(2)} (Alım sinyali).`;
+    } else if (macdHistogram < 0) {
+      macdComment = `MACD ${macdHistogram.toFixed(2)} (Satış sinyali).`;
+    } else {
+      macdComment = `MACD ${macdHistogram.toFixed(2)} (Nötr).`;
+    }
+
+    // Genel Karar
+    let finalDecision = '';
+    if (rsi < 30 && macdHistogram > 0) {
+      finalDecision = "GÜÇLÜ AL: RSI aşırı satım bölgesinde ve MACD pozitif.";
+    } else if (rsi > 70 && macdHistogram < 0) {
+      finalDecision = "GÜÇLÜ SAT: RSI aşırı alımda ve MACD negatif.";
+    } else {
+      finalDecision = "BELİRSİZ: Daha fazla sinyal beklenmeli.";
+    }
+
     return {
       rsi: parseFloat(rsi.toFixed(2)),
       macd: parseFloat(macdHistogram.toFixed(2)),
+      explanation: `${rsiComment} | ${macdComment} => ${finalDecision}`
     };
 
   } catch (error) {
