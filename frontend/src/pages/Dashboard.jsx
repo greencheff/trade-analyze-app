@@ -1,35 +1,45 @@
+// frontend/src/pages/Dashboard.jsx
+
 import { useState } from 'react';
 import Sidebar from '../components/Sidebar.jsx';
 import Navbar from '../components/Navbar.jsx';
 import FeedbackList from '../components/FeedbackList.jsx';
-import { fetchBinanceCandles } from '../api/binanceApi.js';
 import { analyzeCandles } from '../api/binanceAnalyze.js';
 
 export default function Dashboard() {
-  const [feedbacks, setFeedbacks] = useState([]);
-  const [strategies, setStrategies] = useState([]);
   const [symbol, setSymbol] = useState('BTCUSDT');
   const [interval, setInterval] = useState('1m');
+  const [feedbacks, setFeedbacks] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const handleAnalyze = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-
-      // Binance'ten veri çek
-      const candles = await fetchBinanceCandles(symbol, interval);
-
-      // Backend'e analiz için gönder
-      const result = await analyzeCandles(candles);
-
-      // Gelen feedback'leri kaydet
-      setFeedbacks((prev) => [result, ...prev]);
-      if (result?.strategies) {
-        setStrategies(result.strategies);
+      // Binance'ten veri çekiyoruz
+      const response = await fetch(`https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=100`);
+      if (!response.ok) {
+        throw new Error('Veri çekme hatası');
       }
+      const rawData = await response.json();
 
+      const candles = rawData.map(item => ({
+        openTime: item[0],
+        open: parseFloat(item[1]),
+        high: parseFloat(item[2]),
+        low: parseFloat(item[3]),
+        close: parseFloat(item[4]),
+        volume: parseFloat(item[5]),
+      }));
+
+      // Backend'e candle datasını gönderip analiz yaptırıyoruz
+      const analyzeResult = await analyzeCandles(candles);
+
+      setFeedbacks(prev => [
+        { message: 'Analiz başarıyla tamamlandı.', strategies: analyzeResult.strategies || [] },
+        ...prev,
+      ]);
     } catch (error) {
-      console.error('İşlem Hatası:', error);
+      console.error('Analiz sırasında hata:', error);
       alert('Veri çekilirken veya analiz edilirken hata oluştu. Lütfen tekrar deneyin.');
     } finally {
       setLoading(false);
@@ -74,15 +84,15 @@ export default function Dashboard() {
 
           {/* Analiz Geri Bildirimleri */}
           <div className="bg-white p-6 rounded-lg shadow mb-6">
-            <FeedbackList items={feedbacks} />
+            <FeedbackList items={feedbacks.map(f => ({ message: f.message }))} />
           </div>
 
           {/* Strateji Sonuçları */}
-          {strategies.length > 0 && (
+          {feedbacks.length > 0 && feedbacks[0].strategies?.length > 0 && (
             <div className="mt-8">
               <h2 className="text-2xl font-bold mb-4">Strateji Sonuçları</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {strategies.map((strategy, index) => (
+                {feedbacks[0].strategies.map((strategy, index) => (
                   <div
                     key={index}
                     className={`p-4 rounded-lg shadow ${
