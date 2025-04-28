@@ -2,7 +2,8 @@ import { useState } from 'react';
 import Sidebar from '../components/Sidebar.jsx';
 import Navbar from '../components/Navbar.jsx';
 import FeedbackList from '../components/FeedbackList.jsx';
-import { analyzeCandles } from '../api/binanceAnalyze'; // <-- BURASI ÖNEMLİ
+import { fetchBinanceCandles } from '../api/binanceApi.js';
+import { analyzeCandles } from '../api/binanceAnalyze.js';
 
 export default function Dashboard() {
   const [feedbacks, setFeedbacks] = useState([]);
@@ -12,27 +13,16 @@ export default function Dashboard() {
 
   const handleAnalyze = async () => {
     try {
-      const response = await fetch(`https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=100`);
-      const rawData = await response.json();
+      const candles = await fetchBinanceCandles(symbol, interval);
+      const analysisResult = await analyzeCandles(candles);
 
-      const candles = rawData.map(item => ({
-        openTime: item[0],
-        open: parseFloat(item[1]),
-        high: parseFloat(item[2]),
-        low: parseFloat(item[3]),
-        close: parseFloat(item[4]),
-        volume: parseFloat(item[5]),
-      }));
-
-      const result = await analyzeCandles(candles); // <-- Backend'e analiz ettiriyoruz
-
-      setFeedbacks((prev) => [result, ...prev]);
-      if (result?.strategies) {
-        setStrategies(result.strategies);
+      setFeedbacks((prev) => [analysisResult, ...prev]);
+      if (analysisResult?.strategies) {
+        setStrategies(analysisResult.strategies);
       }
     } catch (error) {
-      console.error('Veri çekme veya analiz hatası:', error);
-      alert('Veri çekilirken veya analiz edilirken hata oluştu. Lütfen tekrar deneyin.');
+      console.error('Analiz işlemi hatası:', error);
+      alert('Analiz sırasında bir hata oluştu. Lütfen tekrar deneyin.');
     }
   };
 
@@ -44,7 +34,7 @@ export default function Dashboard() {
         <main className="p-6 overflow-auto">
           <h1 className="text-xl font-bold mb-4">Dashboard</h1>
 
-          {/* Analiz Girişi */}
+          {/* Veri Girişi */}
           <div className="bg-white p-6 rounded-lg shadow mb-6">
             <h2 className="text-lg font-semibold mb-4">Analiz Başlat</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
