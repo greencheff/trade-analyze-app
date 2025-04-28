@@ -3,6 +3,7 @@ import Sidebar from '../components/Sidebar.jsx';
 import Navbar from '../components/Navbar.jsx';
 import WebhookForm from '../components/WebhookForm.jsx';
 import FeedbackList from '../components/FeedbackList.jsx';
+import BinanceFetcher from "../components/BinanceFetcher";
 
 export default function Dashboard() {
   const [feedbacks, setFeedbacks] = useState([]);
