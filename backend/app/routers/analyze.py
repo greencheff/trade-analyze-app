@@ -1,19 +1,10 @@
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 import pandas as pd
+import inspect
 
-from app.indicators import (
-    calculate_rsi,
-    calculate_macd,
-    calculate_ema,
-    calculate_bollinger_bands,
-    calculate_atr,
-    calculate_stochastic_rsi,
-    calculate_adx,
-    calculate_cci,
-    calculate_vwap,
-    calculate_obv,
-)
+# Import all indicators
+from app import indicators
 
 from app.strategy_matcher import (
     momentum_long_signal,
@@ -60,6 +51,37 @@ def run_all_strategies(df):
             })
     return strategies
 
+def compute_indicators(df: pd.DataFrame):
+    """
+    Dynamically compute all calculate_* indicators that accept a single DataFrame argument.
+    Skip functions requiring additional mandatory parameters.
+    """
+    results = {}
+    for name, func in inspect.getmembers(indicators, inspect.isfunction):
+        if name.startswith("calculate_"):
+            try:
+                output = func(df)
+            except TypeError:
+                # skip functions that require additional parameters
+                continue
+
+            # Handle different output types
+            if isinstance(output, pd.Series):
+                results[name] = round(output.iloc[-1], 6)
+            elif isinstance(output, tuple):
+                vals = []
+                for item in output:
+                    if isinstance(item, pd.Series):
+                        vals.append(round(item.iloc[-1], 6))
+                    else:
+                        vals.append(item)
+                results[name] = vals
+            elif isinstance(output, pd.DataFrame):
+                results[name] = output.iloc[-1].to_dict()
+            else:
+                results[name] = output
+    return results
+
 @router.post("/api/analyze")
 async def analyze_data(request: Request):
     try:
@@ -70,75 +92,44 @@ async def analyze_data(request: Request):
             return JSONResponse(status_code=400, content={"error": "Invalid candle data"})
 
         df = pd.DataFrame(candles)
-
-        if df.empty or not all(col in df.columns for col in ["open", "high", "low", "close", "volume"]):
+        required_cols = {"open", "high", "low", "close", "volume"}
+        if df.empty or not required_cols.issubset(df.columns):
             return JSONResponse(status_code=400, content={"error": "Missing required fields in candles"})
 
-        closes = df['close'].tolist()
-        volumes = df['volume'].tolist()
-        highs = df['high'].tolist()
-        lows = df['low'].tolist()
-
-        average_close = round(sum(closes) / len(closes), 2)
-        average_volume = round(sum(volumes) / len(volumes), 2)
-        highest_price = max(highs)
-        lowest_price = min(lows)
-
+        # Basic summary
+        average_close = round(df['close'].mean(), 2)
+        average_volume = round(df['volume'].mean(), 2)
+        highest_price = df['high'].max()
+        lowest_price = df['low'].min()
         trend_direction = "Sideways"
-        if closes[-1] > closes[0]:
+        if df['close'].iloc[-1] > df['close'].iloc[0]:
             trend_direction = "Uptrend"
-        elif closes[-1] < closes[0]:
+        elif df['close'].iloc[-1] < df['close'].iloc[0]:
             trend_direction = "Downtrend"
-
         try:
-            trend_strength = round(((closes[-1] - closes[0]) / closes[0]) * 100, 2)
+            trend_strength = round(((df['close'].iloc[-1] - df['close'].iloc[0]) / df['close'].iloc[0]) * 100, 2)
         except ZeroDivisionError:
             trend_strength = 0.0
 
-        rsi_value = round(calculate_rsi(df, period=14).iloc[-1], 2)
-        ema_value = round(calculate_ema(df, period=14).iloc[-1], 2)
-        macd_value = round(calculate_macd(df)[0].iloc[-1], 2)
-        stochastic_k_value = round(calculate_stochastic_rsi(df).iloc[-1], 2)
-        adx_value = round(calculate_adx(df).iloc[-1], 2)
+        # Compute all indicators dynamically
+        indicator_values = compute_indicators(df)
 
+        # Run strategy signals
         strategy_results = run_all_strategies(df)
-
-        # Burada detaylı açıklama oluşturuyoruz
-        details = []
-
-        if rsi_value > 70:
-            details.append(f"RSI {rsi_value} (Aşırı Alım) → Düzeltme gelebilir.")
-        elif rsi_value < 30:
-            details.append(f"RSI {rsi_value} (Aşırı Satım) → Alım fırsatı olabilir.")
-        else:
-            details.append(f"RSI {rsi_value} (Nötr seviyede).")
-
-        if macd_value > 0:
-            details.append(f"MACD pozitif ({macd_value}), trend yukarı.")
-        else:
-            details.append(f"MACD negatif ({macd_value}), trend aşağı.")
-
-        detailed_analysis = " ".join(details)
 
         return JSONResponse(content={
             "status": "ok",
             "candles_count": len(candles),
-            "analysis": {
+            "summary": {
                 "average_close": average_close,
                 "average_volume": average_volume,
                 "highest_price": highest_price,
                 "lowest_price": lowest_price,
                 "trend_direction": trend_direction,
-                "trend_strength_percent": trend_strength,
-                "rsi_value": rsi_value,
-                "ema_value": ema_value,
-                "macd_value": macd_value,
-                "stochastic_k_value": stochastic_k_value,
-                "adx_value": adx_value,
-                "detailed_analysis": detailed_analysis  # burada frontend için detaylı yorum veriyoruz
+                "trend_strength_percent": trend_strength
             },
+            "indicator_values": indicator_values,
             "strategies": strategy_results
         })
-
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
