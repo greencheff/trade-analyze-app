@@ -1,27 +1,28 @@
 // src/pages/Dashboard.jsx
 
 import { useState } from 'react';
-import Sidebar from '../components/Sidebar';
-import Navbar from '../components/Navbar';
-import FeedbackList from '../components/FeedbackList';
-import { analyzeCandles } from '../api/binanceAnalyze'; // Doğru yer
+import Sidebar from '../components/Sidebar.jsx';
+import Navbar from '../components/Navbar.jsx';
+import FeedbackList from '../components/FeedbackList.jsx';
+import { analyzeCandles } from '../api/binanceAnalyze.js';
 
 export default function Dashboard() {
-  const [feedbacks, setFeedbacks] = useState([]);
-  const [strategies, setStrategies] = useState([]);
   const [symbol, setSymbol] = useState('BTCUSDT');
   const [interval, setInterval] = useState('1m');
+  const [feedbacks, setFeedbacks] = useState([]);
+  const [strategies, setStrategies] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const handleAnalyze = async () => {
     setLoading(true);
     try {
-      // Binance'den veri çekiyoruz
+      // Binance'ten veri çek
       const response = await fetch(`https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=100`);
       const rawData = await response.json();
 
+      // Veri dönüşümü
       const candles = rawData.map(item => ({
-        timestamp: item[0],
+        openTime: item[0],
         open: parseFloat(item[1]),
         high: parseFloat(item[2]),
         low: parseFloat(item[3]),
@@ -29,19 +30,26 @@ export default function Dashboard() {
         volume: parseFloat(item[5]),
       }));
 
-      // Backend'e gönderiyoruz
+      // Backend'e gönderip analiz et
       const result = await analyzeCandles(candles);
 
-      setFeedbacks((prev) => [result, ...prev]);
+      // Gelen sonuçları ekranda göster
+      setFeedbacks(prev => [
+        {
+          message: `Başarıyla ${candles.length} veri analizi yapıldı.`,
+          ...result,
+        },
+        ...prev,
+      ]);
+
       if (result?.strategies) {
         setStrategies(result.strategies);
       }
     } catch (error) {
-      console.error('Analiz sırasında hata:', error);
-      alert('Analiz sırasında bir hata oluştu. Lütfen tekrar deneyin.');
-    } finally {
-      setLoading(false);
+      console.error('İşlem hatası:', error);
+      alert('Veri çekilirken veya analiz edilirken hata oluştu. Lütfen tekrar deneyin.');
     }
+    setLoading(false);
   };
 
   return (
@@ -52,7 +60,6 @@ export default function Dashboard() {
         <main className="p-6 overflow-auto">
           <h1 className="text-xl font-bold mb-4">Dashboard</h1>
 
-          {/* Analiz Başlat */}
           <div className="bg-white p-6 rounded-lg shadow mb-6">
             <h2 className="text-lg font-semibold mb-4">Analiz Başlat</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -75,7 +82,7 @@ export default function Dashboard() {
                 disabled={loading}
                 className="col-span-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
               >
-                {loading ? 'Analiz Ediliyor...' : 'Analiz Et'}
+                {loading ? 'Analiz Yapılıyor...' : 'Analiz Et'}
               </button>
             </div>
           </div>
