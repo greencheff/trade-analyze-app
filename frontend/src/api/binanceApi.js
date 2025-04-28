@@ -1,29 +1,22 @@
-import axios from "axios";
+// src/api/binanceApi.js
 
-const BINANCE_BASE_URL = "https://api.binance.com";
-
-export async function fetchBinanceKlines(symbol = "BTCUSDT", interval = "1m", limit = 100) {
+export async function fetchBinanceCandles(symbol, interval) {
   try {
-    const response = await axios.get(`${BINANCE_BASE_URL}/api/v3/klines`, {
-      params: {
-        symbol,
-        interval,
-        limit,
-      },
-    });
-
-    // Veriyi istediğimiz formata sokuyoruz
-    const formattedData = response.data.map(candle => ({
-      open: parseFloat(candle[1]),
-      high: parseFloat(candle[2]),
-      low: parseFloat(candle[3]),
-      close: parseFloat(candle[4]),
-      volume: parseFloat(candle[5]),
+    const response = await fetch(`https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=100`);
+    if (!response.ok) {
+      throw new Error('Binance veri çekme hatası');
+    }
+    const rawData = await response.json();
+    return rawData.map(item => ({
+      openTime: item[0],
+      open: parseFloat(item[1]),
+      high: parseFloat(item[2]),
+      low: parseFloat(item[3]),
+      close: parseFloat(item[4]),
+      volume: parseFloat(item[5]),
     }));
-
-    return formattedData;
   } catch (error) {
-    console.error("Binance Klines çekilirken hata:", error);
+    console.error('Binance API Hatası:', error);
     throw error;
   }
 }
