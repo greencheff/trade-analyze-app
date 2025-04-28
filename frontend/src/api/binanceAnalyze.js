@@ -77,10 +77,10 @@ export async function analyzeSymbol(symbol, interval) {
     const trendDirection = closes[closes.length - 1] > closes[0] ? "Uptrend" : "Downtrend";
     const trendStrengthPercent = parseFloat((((closes[closes.length - 1] - closes[0]) / closes[0]) * 100).toFixed(2));
 
-    // ADX Dummy (istersen ayrıca ADX hesaplama da ekleriz)
-    const adx = 20; // Örnek sabit değer verdim istersen dinamik de yaparız
+    // ADX Dummy (şu anlık sabit, istersen ileride gerçek hesaplama ekleriz)
+    const adx = 20;
 
-    // Detaylı Analiz
+    // Detaylı Analiz Açıklaması
     let explanation = "";
 
     if (rsi < 30) {
@@ -99,10 +99,10 @@ export async function analyzeSymbol(symbol, interval) {
       explanation += `MACD nötr.`;
     }
 
-    // Geri Dönüş
+    // Geridönüş
     return {
       analysis: {
-        average_close: parseFloat((closes.reduce((a, b) => a + b) / closes.length).toFixed(2)),
+        average_close: parseFloat((closes.reduce((a, b) => a + b, 0) / closes.length).toFixed(2)),
         average_volume: parseFloat((candles.reduce((acc, cur) => acc + cur.volume, 0) / candles.length).toFixed(2)),
         trend_direction: trendDirection,
         trend_strength_percent: trendStrengthPercent,
@@ -111,7 +111,7 @@ export async function analyzeSymbol(symbol, interval) {
         adx_value: adx,
         detailed_analysis: explanation,
       },
-      strategies: [],
+      strategies: [], // İleride strateji önerileri de eklenecekse buradan devam
     };
 
   } catch (error) {
