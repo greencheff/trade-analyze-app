@@ -6,11 +6,10 @@ export async function analyzeSymbol(symbol, interval) {
     const rawData = await response.json();
 
     if (!Array.isArray(rawData)) {
-      throw new Error("Binance API'den beklenen formatta veri alınamadı.");
+      throw new Error("Binance API'den veri çekilemedi.");
     }
 
     const candles = rawData.map(item => ({
-      timestamp: item[0],
       open: parseFloat(item[1]),
       high: parseFloat(item[2]),
       low: parseFloat(item[3]),
@@ -40,8 +39,7 @@ export async function analyzeSymbol(symbol, interval) {
 
     let avgGain = gains / rsiPeriod;
     let avgLoss = losses / rsiPeriod;
-
-    const rs = avgGain / avgLoss;
+    const rs = avgLoss === 0 ? 0 : avgGain / avgLoss;
     const rsi = 100 - (100 / (1 + rs));
 
     // MACD Hesaplama
@@ -49,7 +47,6 @@ export async function analyzeSymbol(symbol, interval) {
       const k = 2 / (period + 1);
       let emaArray = [];
       let ema = data.slice(0, period).reduce((acc, val) => acc + val, 0) / period;
-
       emaArray[period - 1] = ema;
 
       for (let i = period; i < data.length; i++) {
@@ -76,44 +73,49 @@ export async function analyzeSymbol(symbol, interval) {
 
     const macdHistogram = latestMacd - latestSignal;
 
-    // RSI Yorumu
-    let rsiComment = '';
+    // Trend Yönü ve Gücü
+    const trendDirection = closes[closes.length - 1] > closes[0] ? "Uptrend" : "Downtrend";
+    const trendStrengthPercent = parseFloat((((closes[closes.length - 1] - closes[0]) / closes[0]) * 100).toFixed(2));
+
+    // ADX Dummy (istersen ayrıca ADX hesaplama da ekleriz)
+    const adx = 20; // Örnek sabit değer verdim istersen dinamik de yaparız
+
+    // Detaylı Analiz
+    let explanation = "";
+
     if (rsi < 30) {
-      rsiComment = `RSI ${rsi.toFixed(2)} (Aşırı Satım) → Alım fırsatı olabilir.`;
+      explanation += `RSI ${rsi.toFixed(2)} (Aşırı Satım) → Alım fırsatı olabilir. `;
     } else if (rsi > 70) {
-      rsiComment = `RSI ${rsi.toFixed(2)} (Aşırı Alım) → Dikkatli olunmalı.`;
+      explanation += `RSI ${rsi.toFixed(2)} (Aşırı Alım) → Düzeltme gelebilir. `;
     } else {
-      rsiComment = `RSI ${rsi.toFixed(2)} (Nötr)`;
+      explanation += `RSI ${rsi.toFixed(2)} (Nötr). `;
     }
 
-    // MACD Yorumu
-    let macdComment = '';
     if (macdHistogram > 0) {
-      macdComment = `MACD ${macdHistogram.toFixed(2)} (Alım sinyali).`;
+      explanation += `MACD pozitif (${macdHistogram.toFixed(2)}).`;
     } else if (macdHistogram < 0) {
-      macdComment = `MACD ${macdHistogram.toFixed(2)} (Satış sinyali).`;
+      explanation += `MACD negatif (${macdHistogram.toFixed(2)}).`;
     } else {
-      macdComment = `MACD ${macdHistogram.toFixed(2)} (Nötr).`;
+      explanation += `MACD nötr.`;
     }
 
-    // Genel Karar
-    let finalDecision = '';
-    if (rsi < 30 && macdHistogram > 0) {
-      finalDecision = "GÜÇLÜ AL: RSI aşırı satım bölgesinde ve MACD pozitif.";
-    } else if (rsi > 70 && macdHistogram < 0) {
-      finalDecision = "GÜÇLÜ SAT: RSI aşırı alımda ve MACD negatif.";
-    } else {
-      finalDecision = "BELİRSİZ: Daha fazla sinyal beklenmeli.";
-    }
-
+    // Geri Dönüş
     return {
-      rsi: parseFloat(rsi.toFixed(2)),
-      macd: parseFloat(macdHistogram.toFixed(2)),
-      explanation: `${rsiComment} | ${macdComment} => ${finalDecision}`
+      analysis: {
+        average_close: parseFloat((closes.reduce((a, b) => a + b) / closes.length).toFixed(2)),
+        average_volume: parseFloat((candles.reduce((acc, cur) => acc + cur.volume, 0) / candles.length).toFixed(2)),
+        trend_direction: trendDirection,
+        trend_strength_percent: trendStrengthPercent,
+        rsi_value: parseFloat(rsi.toFixed(2)),
+        macd_value: parseFloat(macdHistogram.toFixed(2)),
+        adx_value: adx,
+        detailed_analysis: explanation,
+      },
+      strategies: [],
     };
 
   } catch (error) {
-    console.error('Binance Analyze API Hatası:', error);
+    console.error('Analyze API Hatası:', error);
     throw error;
   }
 }
