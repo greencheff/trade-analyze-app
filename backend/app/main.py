@@ -1,13 +1,24 @@
-# backend/app/main.py
+# /backend/app/main.py
 
 from fastapi import FastAPI
-from app.routes import analyze
+from fastapi.middleware.cors import CORSMiddleware
+from app import analyze  # <- sadece burası düzeltildi (routes çıkarıldı)
 
 app = FastAPI()
 
-# Ana route olarak "/api" altında analyze route'unu dahil ediyoruz
-app.include_router(analyze.router, prefix="/api")
+# CORS ayarları (frontend'den rahat istek atabilelim diye)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Gerekirse sadece frontend URL'ini verebilirsin güvenlik için
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
+# API kök endpointi
 @app.get("/")
-def read_root():
-    return {"message": "Trade Analyze Backend API Çalışıyor."}
+async def root():
+    return {"message": "Trade Analyze API çalışıyor."}
+
+# Analyze route'unu ekle
+app.include_router(analyze.router)
