@@ -847,5 +847,16 @@ def trend_strength_percent(df, period=14):
     """
     return calculate_adx(df, period)
 
+def average_close(df, window=14):
+    """
+    Son 14 mumun kapanış fiyatlarının ortalamasını hesaplar.
+    """
+    return df["close"].rolling(window=window).mean()
+
+def average_volume(df, window=14):
+    """
+    Son 14 mumun hacim ortalamasını hesaplar.
+    """
+    return df["volume"].rolling(window=window).mean()
 
 
