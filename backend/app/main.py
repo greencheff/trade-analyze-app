@@ -1,8 +1,7 @@
-# backend/app/main.py
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers.analyze import router as analyze_router  # routers doğru oldu!
+from app.routers.analyze import router as analyze_router
+from app.routers.indicators_router import router as indicators_router  # ← yeni ekledik!
 
 app = FastAPI()
 
@@ -16,10 +15,12 @@ app.add_middleware(
 )
 
 # API kök endpointi
-define_root = lambda: None  # placeholder to satisfy linting
 @app.get("/")
 async def root():
     return {"message": "Trade Analyze API çalışıyor."}
 
 # Analyze router'ı "/api" prefix'i ile bağlıyoruz
 app.include_router(analyze_router, prefix="/api")
+
+# Yeni Indicators router'ı "/api" prefix'i ile bağlıyoruz
+app.include_router(indicators_router, prefix="/api")
