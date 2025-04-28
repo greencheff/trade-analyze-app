@@ -1,9 +1,8 @@
-// src/pages/Dashboard.jsx
-
 import { useState } from 'react';
 import Sidebar from '../components/Sidebar.jsx';
 import Navbar from '../components/Navbar.jsx';
 import FeedbackList from '../components/FeedbackList.jsx';
+import { fetchBinanceCandles } from '../api/binanceApi.js';
 import { analyzeCandles } from '../api/binanceAnalyze.js';
 
 export default function Dashboard() {
@@ -18,28 +17,19 @@ export default function Dashboard() {
       setLoading(true);
 
       // Binance'ten veri çek
-      const response = await fetch(`https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=100`);
-      const rawData = await response.json();
+      const candles = await fetchBinanceCandles(symbol, interval);
 
-      const candles = rawData.map(item => ({
-        timestamp: item[0],
-        open: parseFloat(item[1]),
-        high: parseFloat(item[2]),
-        low: parseFloat(item[3]),
-        close: parseFloat(item[4]),
-        volume: parseFloat(item[5]),
-      }));
+      // Backend'e analiz için gönder
+      const result = await analyzeCandles(candles);
 
-      // Backend'e gönderip analiz ettir
-      const analyzeResult = await analyzeCandles(candles);
-
-      setFeedbacks((prev) => [analyzeResult, ...prev]);
-      if (analyzeResult?.strategies) {
-        setStrategies(analyzeResult.strategies);
+      // Gelen feedback'leri kaydet
+      setFeedbacks((prev) => [result, ...prev]);
+      if (result?.strategies) {
+        setStrategies(result.strategies);
       }
 
     } catch (error) {
-      console.error('Analiz hatası:', error);
+      console.error('İşlem Hatası:', error);
       alert('Veri çekilirken veya analiz edilirken hata oluştu. Lütfen tekrar deneyin.');
     } finally {
       setLoading(false);
@@ -61,7 +51,7 @@ export default function Dashboard() {
               <input
                 type="text"
                 value={symbol}
-                onChange={(e) => setSymbol(e.target.value.toUpperCase())}
+                onChange={(e) => setSymbol(e.target.value)}
                 placeholder="Örn: BTCUSDT"
                 className="border p-2 rounded w-full"
               />
@@ -74,8 +64,8 @@ export default function Dashboard() {
               />
               <button
                 onClick={handleAnalyze}
-                className="col-span-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
                 disabled={loading}
+                className="col-span-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
               >
                 {loading ? 'Analiz Yapılıyor...' : 'Analiz Et'}
               </button>
