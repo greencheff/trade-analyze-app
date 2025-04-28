@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Sidebar from '../components/Sidebar';
 import Navbar from '../components/Navbar';
 import { analyzeCandles } from '../api/binanceAnalyze';
-import IndicatorDropdown from '../components/IndicatorDropdown'; // 🔥 Ekledik
+import IndicatorDropdown from '../components/IndicatorDropdown';
 
 export default function Dashboard() {
   const [feedbacks, setFeedbacks] = useState([]);
@@ -17,35 +17,24 @@ export default function Dashboard() {
   const handleAnalyze = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=100`);
-      const rawData = await response.json();
-
-      const candles = rawData.map(item => ({
-        open: parseFloat(item[1]),
-        high: parseFloat(item[2]),
-        low: parseFloat(item[3]),
-        close: parseFloat(item[4]),
-        volume: parseFloat(item[5]),
-      }));
-
-      const result = await analyzeCandles(candles);
+      const result = await analyzeCandles(symbol, interval);
 
       const feedbackItem = {
         symbol,
         interval,
-        averageClose: result.analysis?.average_close,
-        averageVolume: result.analysis?.average_volume,
-        trendDirection: result.analysis?.trend_direction,
-        trendStrength: result.analysis?.trend_strength_percent,
-        rsi: result.analysis?.rsi_value,
-        macd: result.analysis?.macd_value,
-        adx: result.analysis?.adx_value,
-        detailedAnalysis: result.analysis?.detailed_analysis || "Detaylı analiz verisi bulunamadı.",
+        averageClose: result.summary?.average_close,
+        averageVolume: result.summary?.average_volume,
+        trendDirection: result.summary?.trend_direction,
+        trendStrength: result.summary?.trend_strength_percent,
+        rsi: result.indicator_values?.rsi_value,
+        macd: result.indicator_values?.macd_value,
+        adx: result.indicator_values?.adx_value,
+        detailedAnalysis: result.summary?.detailed_analysis || "Detaylı analiz verisi bulunamadı.",
         strategies: result.strategies || []
       };
 
       setFeedbacks(prev => [feedbackItem, ...prev]);
-      setIndicatorValues(result.indicator_values || {}); // 🔥 indicatorValues kaydediyoruz
+      setIndicatorValues(result.indicator_values || {});
     } catch (error) {
       console.error('Veri çekme veya analiz hatası:', error);
       alert('Veri çekilirken veya analiz edilirken hata oluştu. Lütfen tekrar deneyin.');
@@ -71,7 +60,6 @@ export default function Dashboard() {
         <main className="p-6 overflow-auto">
           <h1 className="text-xl font-bold mb-4">Dashboard</h1>
 
-          {/* 🔥 İndikatör Dropdown Alanı */}
           {Object.keys(indicatorValues).length > 0 && (
             <div className="bg-white p-6 rounded-lg shadow mb-6">
               <h2 className="text-lg font-semibold mb-4">İndikatör Seçimi</h2>
@@ -79,7 +67,6 @@ export default function Dashboard() {
                 indicatorValues={indicatorValues}
                 onAnalyze={handleIndicatorAnalyze}
               />
-
               {selectedIndicatorResult && (
                 <div className="mt-4 p-4 border rounded bg-gray-100">
                   <h3 className="text-lg font-semibold">{selectedIndicatorResult.name}</h3>
@@ -89,7 +76,6 @@ export default function Dashboard() {
             </div>
           )}
 
-          {/* 🔥 Eski Analiz Başlat Alanı */}
           <div className="bg-white p-6 rounded-lg shadow mb-6">
             <h2 className="text-lg font-semibold mb-4">Analiz Başlat</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -117,7 +103,6 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* 🔥 Feedback Alanı */}
           {feedbacks.map((item, idx) => (
             <div key={idx} className="bg-white p-6 rounded-lg shadow mb-6">
               <h2 className="text-xl font-bold text-indigo-600 mb-2">{item.symbol} ({item.interval})</h2>
@@ -128,12 +113,10 @@ export default function Dashboard() {
                 <p><strong>ADX:</strong> {item.adx}</p>
               </div>
 
-              {/* Detaylı Analiz */}
               <div className="mt-4 p-4 bg-gray-50 rounded-lg text-gray-600 text-sm whitespace-pre-line">
                 {item.detailedAnalysis}
               </div>
 
-              {/* Strateji Önerileri */}
               {item.strategies.length > 0 && (
                 <div className="mt-4">
                   <h3 className="font-semibold text-md text-green-700 mb-2">Strateji Önerileri:</h3>
