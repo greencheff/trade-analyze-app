@@ -11,15 +11,31 @@ export default function Dashboard() {
 
   const handleAnalyze = async () => {
     try {
-      const response = await fetch(`/api/analyze?symbol=${symbol}&interval=${interval}`);
-      const data = await response.json();
-      setFeedbacks((prev) => [data, ...prev]);
-      if (data?.strategies) {
-        setStrategies(data.strategies);
+      const response = await fetch(`https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=100`);
+      const rawData = await response.json();
+
+      const candles = rawData.map(item => ({
+        openTime: item[0],
+        open: parseFloat(item[1]),
+        high: parseFloat(item[2]),
+        low: parseFloat(item[3]),
+        close: parseFloat(item[4]),
+        volume: parseFloat(item[5]),
+      }));
+
+      // Burada backend analizi bekleniyor, ancak test için local veriyle devam ediyoruz
+      const testResult = {
+        message: `Başarıyla ${candles.length} veri noktası alındı.`,
+        strategies: [],
+      };
+
+      setFeedbacks((prev) => [testResult, ...prev]);
+      if (testResult?.strategies) {
+        setStrategies(testResult.strategies);
       }
     } catch (error) {
-      console.error('Analiz hatası:', error);
-      alert('Analiz sırasında hata oluştu. Lütfen tekrar deneyin.');
+      console.error('Veri çekme hatası:', error);
+      alert('Veri çekilirken hata oluştu. Lütfen tekrar deneyin.');
     }
   };
 
