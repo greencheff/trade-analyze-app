@@ -14,15 +14,15 @@ export default function Dashboard() {
   const handleAnalyze = async () => {
     try {
       const candles = await fetchBinanceCandles(symbol, interval);
-      const analysisResult = await analyzeCandles(candles);
+      const analysisResult = await analyzeCandles(candles, symbol, interval);
 
       setFeedbacks((prev) => [analysisResult, ...prev]);
       if (analysisResult?.strategies) {
         setStrategies(analysisResult.strategies);
       }
     } catch (error) {
-      console.error('Analiz işlemi hatası:', error);
-      alert('Analiz sırasında bir hata oluştu. Lütfen tekrar deneyin.');
+      console.error('Veri çekme veya analiz hatası:', error);
+      alert('Veri çekilirken veya analiz edilirken hata oluştu. Lütfen tekrar deneyin.');
     }
   };
 
