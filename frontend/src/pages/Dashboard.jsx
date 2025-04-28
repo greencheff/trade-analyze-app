@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Sidebar from '../components/Sidebar';
 import Navbar from '../components/Navbar';
 import { analyzeCandles } from '../api/binanceAnalyze';
-import IndicatorDropdown from '../components/IndicatorDropdown';
+import IndicatorDropdown from '../components/IndicatorDropdown'; // 🔥 Ekledik
 
 export default function Dashboard() {
   const [feedbacks, setFeedbacks] = useState([]);
@@ -45,12 +45,21 @@ export default function Dashboard() {
       };
 
       setFeedbacks(prev => [feedbackItem, ...prev]);
-      setIndicatorValues(result.indicator_values || {}); // 🔥 indicator_values çekiyoruz
+      setIndicatorValues(result.indicator_values || {}); // 🔥 indicatorValues kaydediyoruz
     } catch (error) {
       console.error('Veri çekme veya analiz hatası:', error);
       alert('Veri çekilirken veya analiz edilirken hata oluştu. Lütfen tekrar deneyin.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleIndicatorAnalyze = (selected) => {
+    if (selected && indicatorValues[selected] !== undefined) {
+      setSelectedIndicatorResult({
+        name: selected,
+        value: indicatorValues[selected],
+      });
     }
   };
 
@@ -62,19 +71,15 @@ export default function Dashboard() {
         <main className="p-6 overflow-auto">
           <h1 className="text-xl font-bold mb-4">Dashboard</h1>
 
-          {/* 🔥 İNDİKATÖR DROPDOWN TEST */}
-          {indicatorValues && Object.keys(indicatorValues).length > 0 && (
+          {/* 🔥 İndikatör Dropdown Alanı */}
+          {Object.keys(indicatorValues).length > 0 && (
             <div className="bg-white p-6 rounded-lg shadow mb-6">
               <h2 className="text-lg font-semibold mb-4">İndikatör Seçimi</h2>
               <IndicatorDropdown
                 indicatorValues={indicatorValues}
-                onAnalyze={(selected) => {
-                  setSelectedIndicatorResult({
-                    name: selected,
-                    value: indicatorValues[selected]
-                  });
-                }}
+                onAnalyze={handleIndicatorAnalyze}
               />
+
               {selectedIndicatorResult && (
                 <div className="mt-4 p-4 border rounded bg-gray-100">
                   <h3 className="text-lg font-semibold">{selectedIndicatorResult.name}</h3>
@@ -84,7 +89,7 @@ export default function Dashboard() {
             </div>
           )}
 
-          {/* 🔥 ANALİZ BAŞLAT */}
+          {/* 🔥 Eski Analiz Başlat Alanı */}
           <div className="bg-white p-6 rounded-lg shadow mb-6">
             <h2 className="text-lg font-semibold mb-4">Analiz Başlat</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -112,7 +117,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* 🔥 ANALİZ SONUÇLARI */}
+          {/* 🔥 Feedback Alanı */}
           {feedbacks.map((item, idx) => (
             <div key={idx} className="bg-white p-6 rounded-lg shadow mb-6">
               <h2 className="text-xl font-bold text-indigo-600 mb-2">{item.symbol} ({item.interval})</h2>
@@ -123,12 +128,12 @@ export default function Dashboard() {
                 <p><strong>ADX:</strong> {item.adx}</p>
               </div>
 
-              {/* 🔥 DETAYLI ANALİZ */}
+              {/* Detaylı Analiz */}
               <div className="mt-4 p-4 bg-gray-50 rounded-lg text-gray-600 text-sm whitespace-pre-line">
                 {item.detailedAnalysis}
               </div>
 
-              {/* 🔥 STRATEJİ ÖNERİLERİ */}
+              {/* Strateji Önerileri */}
               {item.strategies.length > 0 && (
                 <div className="mt-4">
                   <h3 className="font-semibold text-md text-green-700 mb-2">Strateji Önerileri:</h3>
