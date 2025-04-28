@@ -49,8 +49,8 @@ def run_all_strategies(df):
             result, explanation = func(df)
             strategies.append({
                 "name": name,
-                "signal": bool(result),  # Buraya dikkat! (bool dönüşümü garanti ediyoruz)
-                "explanation": str(explanation)  # String'e dönüştürdük
+                "signal": bool(result),
+                "explanation": str(explanation)
             })
         except Exception as e:
             strategies.append({
@@ -64,9 +64,6 @@ def run_all_strategies(df):
 async def analyze_data(request: Request):
     try:
         data = await request.json()
-        symbol = data.get("symbol", "Unknown")
-        interval = data.get("interval", "Unknown")
-        rsi_period = data.get("rsi_period", 14)
         candles = data.get("candles", [])
 
         if not candles or not isinstance(candles, list):
@@ -98,7 +95,7 @@ async def analyze_data(request: Request):
         except ZeroDivisionError:
             trend_strength = 0.0
 
-        rsi_value = round(calculate_rsi(df, period=rsi_period).iloc[-1], 2)
+        rsi_value = round(calculate_rsi(df, period=14).iloc[-1], 2)
         ema_value = round(calculate_ema(df, period=14).iloc[-1], 2)
         macd_value = round(calculate_macd(df)[0].iloc[-1], 2)
         stochastic_k_value = round(calculate_stochastic_rsi(df).iloc[-1], 2)
@@ -108,8 +105,6 @@ async def analyze_data(request: Request):
 
         return JSONResponse(content={
             "status": "ok",
-            "symbol": symbol,
-            "interval": interval,
             "candles_count": len(candles),
             "analysis": {
                 "average_close": average_close,
