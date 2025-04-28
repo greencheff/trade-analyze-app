@@ -1,3 +1,5 @@
+// src/pages/Dashboard.jsx
+
 import { useState } from 'react';
 import Sidebar from '../components/Sidebar.jsx';
 import Navbar from '../components/Navbar.jsx';
@@ -28,13 +30,17 @@ export default function Dashboard() {
 
       // Gelen veriyi uyarlıyoruz
       const feedbackItem = {
-        symbol: result.symbol,
-        interval: result.interval,
-        rsi: result.analysis.rsi_value,
-        macd: result.analysis.macd_value,
-        feedback: result.strategies.length > 0
-          ? result.strategies[0].explanation
-          : 'Uygun strateji bulunamadı'
+        symbol,
+        interval,
+        averageClose: result.analysis?.average_close,
+        averageVolume: result.analysis?.average_volume,
+        trendDirection: result.analysis?.trend_direction,
+        trendStrength: result.analysis?.trend_strength_percent,
+        rsi: result.analysis?.rsi_value,
+        macd: result.analysis?.macd_value,
+        adx: result.analysis?.adx_value,
+        detailedAnalysis: result.analysis?.detailed_analysis || "Detaylı açıklama bulunamadı.",
+        strategies: result.strategies || []
       };
 
       setFeedbacks(prev => [feedbackItem, ...prev]);
@@ -83,7 +89,27 @@ export default function Dashboard() {
           </div>
 
           {/* Analiz Geri Bildirimleri */}
-          <FeedbackList items={feedbacks} />
+          {feedbacks.map((item, idx) => (
+            <div key={idx} className="bg-white p-6 rounded-lg shadow mb-6">
+              <h2 className="text-lg font-bold text-indigo-700">{item.symbol} ({item.interval})</h2>
+              <p className="text-sm text-gray-500 mb-2">Trend: {item.trendDirection} ({item.trendStrength}%)</p>
+              <p className="text-sm text-gray-500 mb-2">RSI: {item.rsi} | MACD: {item.macd} | ADX: {item.adx}</p>
+              <p className="text-sm mt-2">{item.detailedAnalysis}</p>
+
+              {item.strategies && item.strategies.length > 0 && (
+                <div className="mt-4">
+                  <h3 className="font-semibold text-md text-green-700 mb-2">Strateji Sonuçları:</h3>
+                  <ul className="list-disc ml-5">
+                    {item.strategies.map((strategy, i) => (
+                      <li key={i} className="text-sm">
+                        <strong>{strategy.name}:</strong> {strategy.explanation}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          ))}
         </main>
       </div>
     </div>
