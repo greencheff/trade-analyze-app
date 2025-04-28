@@ -2,7 +2,7 @@ import { useState } from 'react';
 import Sidebar from '../components/Sidebar.jsx';
 import Navbar from '../components/Navbar.jsx';
 import FeedbackList from '../components/FeedbackList.jsx';
-import { analyzeCandles } from '../api/binanceAnalyze'; // En üstte import
+import { analyzeCandles } from '../api/binanceAnalyze.js';
 
 export default function Dashboard() {
   const [feedbacks, setFeedbacks] = useState([]);
@@ -24,26 +24,15 @@ export default function Dashboard() {
         volume: parseFloat(item[5]),
       }));
 
-      // Backend analize gönder
       const analysisResult = await analyzeCandles(candles);
 
-      // Şimdi doğru feedback formatı hazırlıyoruz:
-      const formattedFeedback = {
-        symbol: symbol,
-        interval: interval,
-        rsi: analysisResult.rsi || '-',    // Gelen analiz verisine göre
-        macd: analysisResult.macd || '-',
-        feedback: analysisResult.feedback || 'Analiz bulunamadı',
-      };
-
-      setFeedbacks(prev => [formattedFeedback, ...prev]);
-      
+      setFeedbacks(prev => [analysisResult, ...prev]);
       if (analysisResult?.strategies) {
         setStrategies(analysisResult.strategies);
       }
     } catch (error) {
       console.error('Veri çekme veya analiz hatası:', error);
-      alert('Analiz sırasında hata oluştu.');
+      alert('Veri çekme veya analiz sırasında hata oluştu. Lütfen tekrar deneyin.');
     }
   };
 
@@ -88,7 +77,7 @@ export default function Dashboard() {
           </div>
 
           {/* Strateji Sonuçları */}
-          {strategies.length > 0 && (
+          {strategies && strategies.length > 0 && (
             <div className="mt-8">
               <h2 className="text-2xl font-bold mb-4">Strateji Sonuçları</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
