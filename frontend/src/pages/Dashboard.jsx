@@ -1,28 +1,46 @@
+// src/pages/Dashboard.jsx
+
 import { useState } from 'react';
-import Sidebar from '../components/Sidebar.jsx';
-import Navbar from '../components/Navbar.jsx';
-import FeedbackList from '../components/FeedbackList.jsx';
-import { fetchBinanceCandles } from '../api/binanceApi.js';
-import { analyzeCandles } from '../api/binanceAnalyze.js';
+import Sidebar from '../components/Sidebar';
+import Navbar from '../components/Navbar';
+import FeedbackList from '../components/FeedbackList';
+import { analyzeCandles } from '../api/binanceAnalyze'; // Doğru yer
 
 export default function Dashboard() {
   const [feedbacks, setFeedbacks] = useState([]);
   const [strategies, setStrategies] = useState([]);
   const [symbol, setSymbol] = useState('BTCUSDT');
   const [interval, setInterval] = useState('1m');
+  const [loading, setLoading] = useState(false);
 
   const handleAnalyze = async () => {
+    setLoading(true);
     try {
-      const candles = await fetchBinanceCandles(symbol, interval);
-      const analysisResult = await analyzeCandles(candles, symbol, interval);
+      // Binance'den veri çekiyoruz
+      const response = await fetch(`https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=100`);
+      const rawData = await response.json();
 
-      setFeedbacks((prev) => [analysisResult, ...prev]);
-      if (analysisResult?.strategies) {
-        setStrategies(analysisResult.strategies);
+      const candles = rawData.map(item => ({
+        timestamp: item[0],
+        open: parseFloat(item[1]),
+        high: parseFloat(item[2]),
+        low: parseFloat(item[3]),
+        close: parseFloat(item[4]),
+        volume: parseFloat(item[5]),
+      }));
+
+      // Backend'e gönderiyoruz
+      const result = await analyzeCandles(candles);
+
+      setFeedbacks((prev) => [result, ...prev]);
+      if (result?.strategies) {
+        setStrategies(result.strategies);
       }
     } catch (error) {
-      console.error('Veri çekme veya analiz hatası:', error);
-      alert('Veri çekilirken veya analiz edilirken hata oluştu. Lütfen tekrar deneyin.');
+      console.error('Analiz sırasında hata:', error);
+      alert('Analiz sırasında bir hata oluştu. Lütfen tekrar deneyin.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -34,7 +52,7 @@ export default function Dashboard() {
         <main className="p-6 overflow-auto">
           <h1 className="text-xl font-bold mb-4">Dashboard</h1>
 
-          {/* Veri Girişi */}
+          {/* Analiz Başlat */}
           <div className="bg-white p-6 rounded-lg shadow mb-6">
             <h2 className="text-lg font-semibold mb-4">Analiz Başlat</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -54,9 +72,10 @@ export default function Dashboard() {
               />
               <button
                 onClick={handleAnalyze}
+                disabled={loading}
                 className="col-span-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
               >
-                Analiz Et
+                {loading ? 'Analiz Ediliyor...' : 'Analiz Et'}
               </button>
             </div>
           </div>
