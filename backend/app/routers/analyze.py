@@ -2,7 +2,6 @@
 
 from fastapi import APIRouter, Request, HTTPException
 import pandas as pd
-import numpy as np
 from app.indicators import *
 from app.strategy_matcher import run_all_strategies
 
@@ -15,14 +14,15 @@ async def analyze_data(request: Request):
         candles = body.get("candles", [])
 
         if not candles or not isinstance(candles, list):
-            raise HTTPException(status_code=400, detail="Gönderilen candles verisi hatalı veya eksik.")
+            raise HTTPException(status_code=400, detail="Gönderilen candle verisi eksik veya hatalı.")
 
-        # Candle verilerini dataframe'e çeviriyoruz
+        # Veriyi DataFrame'e çevir
         df = pd.DataFrame(candles, columns=["timestamp", "open", "high", "low", "close", "volume"])
         df["timestamp"] = pd.to_datetime(df["timestamp"], unit="ms")
         df.set_index("timestamp", inplace=True)
         df = df.astype(float)
 
+        # İndikatör hesaplamaları
         indicator_values = {}
 
         try:
@@ -42,6 +42,7 @@ async def analyze_data(request: Request):
         elif indicator_values["trend_strength"] <= 35:
             trend_direction = "Aşağı"
 
+        # Strateji hesaplamaları
         try:
             strategies = run_all_strategies(df)
         except Exception as e:
@@ -55,7 +56,7 @@ async def analyze_data(request: Request):
                 "average_volume": indicator_values["average_volume"],
                 "trend_direction": trend_direction,
                 "trend_strength_percent": indicator_values["trend_strength"],
-                "detailed_analysis": "İndikatörlere göre piyasa analizi tamamlandı."
+                "detailed_analysis": "İndikatörlere göre piyasa yorumu tamamlandı."
             },
             "indicator_values": indicator_values,
             "strategies": strategies
