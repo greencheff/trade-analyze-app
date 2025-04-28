@@ -1,7 +1,11 @@
 import traceback
 from fastapi import APIRouter, Request, HTTPException
 import pandas as pd
-from app.indicators import * 
+from app.indicators import (
+    calculate_rsi,
+    calculate_macd,
+    calculate_adx,
+)
 from app.strategy_matcher import run_all_strategies
 
 router = APIRouter()
@@ -15,8 +19,7 @@ async def analyze_data(request: Request):
             raise HTTPException(400, "Gönderilen candle verisi eksik veya hatalı.")
 
         # DataFrame’e dönüştür ve index’e timestamp ata
-        df = pd.DataFrame(candles,
-            columns=["timestamp","open","high","low","close","volume"])
+        df = pd.DataFrame(candles, columns=["timestamp", "open", "high", "low", "close", "volume"])
         df["timestamp"] = pd.to_datetime(df["timestamp"], unit="ms")
         df.set_index("timestamp", inplace=True)
         df = df.astype(float)
@@ -27,9 +30,9 @@ async def analyze_data(request: Request):
             indicator_values["rsi"]             = calculate_rsi(df, 14).iloc[-1]
             indicator_values["macd"]            = calculate_macd(df)[0].iloc[-1]
             indicator_values["adx"]             = calculate_adx(df, 14).iloc[-1]
-            indicator_values["trend_strength"]  = trend_strength_percent(df, 14).iloc[-1]
-            indicator_values["average_close"]   = average_close(df).iloc[-1]
-            indicator_values["average_volume"]  = average_volume(df).iloc[-1]
+            indicator_values["trend_strength"]  = calculate_adx(df, 14).iloc[-1]  # Burayı ADX ile eşitledik
+            indicator_values["average_close"]   = df["close"].mean()
+            indicator_values["average_volume"]  = df["volume"].mean()
         except Exception as e:
             traceback.print_exc()
             raise HTTPException(500, f"İndikatör hesaplama hatası: {e}")
@@ -53,18 +56,17 @@ async def analyze_data(request: Request):
         return {
             "status": "ok",
             "summary": {
-                "average_close":        indicator_values["average_close"],
-                "average_volume":       indicator_values["average_volume"],
-                "trend_direction":      trend_direction,
+                "average_close":          indicator_values["average_close"],
+                "average_volume":         indicator_values["average_volume"],
+                "trend_direction":        trend_direction,
                 "trend_strength_percent": trend_strength,
-                "detailed_analysis":    "İndikatörlere göre piyasa yorumu tamamlandı."
+                "detailed_analysis":      "İndikatörlere göre piyasa yorumu tamamlandı."
             },
             "indicator_values": indicator_values,
             "strategies":       strategies
         }
 
     except HTTPException:
-        # raise ettiğimiz HTTPException’lar direk dönsün
         raise
     except Exception as e:
         traceback.print_exc()
