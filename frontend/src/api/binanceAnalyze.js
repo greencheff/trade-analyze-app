@@ -27,7 +27,7 @@ export async function analyzeCandles(symbol, interval) {
     // 2. FastAPI'ye candles verisini gönder
     const response = await axios.post(API_URL, { candles });
 
-    if (response.data && response.data.success) {
+    if (response.data && response.data.status === "ok") {
       return {
         indicator_values: response.data.indicator_values || {},
         summary: response.data.summary || {},
