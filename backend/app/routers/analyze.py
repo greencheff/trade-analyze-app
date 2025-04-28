@@ -45,14 +45,14 @@ async def analyze(request: Request):
         body = await request.json()
         candles = body.get("candles")
 
-        if not candles:
-            raise HTTPException(status_code=400, detail="Candles verisi eksik veya boş.")
+        if not candles or not isinstance(candles, list):
+            raise HTTPException(status_code=400, detail="Gönderilen veride 'candles' listesi eksik veya hatalı.")
 
         df = pd.DataFrame(candles)
 
         required_columns = {'open', 'high', 'low', 'close', 'volume'}
         if not required_columns.issubset(df.columns):
-            raise HTTPException(status_code=400, detail="Candles verisi gerekli kolonları içermiyor (open, high, low, close, volume).")
+            raise HTTPException(status_code=400, detail="Gönderilen verilerde 'open', 'high', 'low', 'close', 'volume' kolonları eksik.")
 
         indicator_values = compute_indicators(df)
         strategies = run_all_strategies(df)
@@ -81,4 +81,5 @@ async def analyze(request: Request):
         }
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Sunucu hatası: {str(e)}")
+        print(f"Sunucu tarafı hata: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Sunucu tarafında hata oluştu: {str(e)}")
