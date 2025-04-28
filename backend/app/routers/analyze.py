@@ -103,6 +103,23 @@ async def analyze_data(request: Request):
 
         strategy_results = run_all_strategies(df)
 
+        # Burada detaylı açıklama oluşturuyoruz
+        details = []
+
+        if rsi_value > 70:
+            details.append(f"RSI {rsi_value} (Aşırı Alım) → Düzeltme gelebilir.")
+        elif rsi_value < 30:
+            details.append(f"RSI {rsi_value} (Aşırı Satım) → Alım fırsatı olabilir.")
+        else:
+            details.append(f"RSI {rsi_value} (Nötr seviyede).")
+
+        if macd_value > 0:
+            details.append(f"MACD pozitif ({macd_value}), trend yukarı.")
+        else:
+            details.append(f"MACD negatif ({macd_value}), trend aşağı.")
+
+        detailed_analysis = " ".join(details)
+
         return JSONResponse(content={
             "status": "ok",
             "candles_count": len(candles),
@@ -118,6 +135,7 @@ async def analyze_data(request: Request):
                 "macd_value": macd_value,
                 "stochastic_k_value": stochastic_k_value,
                 "adx_value": adx_value,
+                "detailed_analysis": detailed_analysis  # burada frontend için detaylı yorum veriyoruz
             },
             "strategies": strategy_results
         })
