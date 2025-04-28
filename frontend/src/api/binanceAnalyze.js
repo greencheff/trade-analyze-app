@@ -1,13 +1,18 @@
 // src/api/binanceAnalyze.js
 
-export async function analyzeCandles(candles) {
+export async function analyzeCandles(candles, symbol = "BTCUSDT", interval = "1m", rsi_period = 14) {
   try {
     const response = await fetch('https://trade-analyze-backend.onrender.com/api/analyze', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ candles }),
+      body: JSON.stringify({
+        symbol,
+        interval,
+        rsi_period,
+        candles
+      }),
     });
 
     if (!response.ok) {
