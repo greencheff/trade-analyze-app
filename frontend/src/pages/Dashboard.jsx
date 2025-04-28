@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Sidebar from '../components/Sidebar';
 import Navbar from '../components/Navbar';
 import { analyzeCandles } from '../api/binanceAnalyze'; // 🔥 doğru import
+import IndicatorDropdown from '../components/IndicatorDropdown';
 
 export default function Dashboard() {
   // Buradan sonra senin diğer kodların aynı şekilde devam edecek...
