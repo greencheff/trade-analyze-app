@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import Sidebar from '../components/Sidebar.jsx';
 import Navbar from '../components/Navbar.jsx';
-import FeedbackList from '../components/FeedbackList.jsx';
 import { analyzeCandles } from '../api/binanceAnalyze.js';
 
 export default function Dashboard() {
@@ -28,7 +27,6 @@ export default function Dashboard() {
 
       const result = await analyzeCandles(candles);
 
-      // Gelen veriyi uyarlıyoruz
       const feedbackItem = {
         symbol,
         interval,
@@ -39,7 +37,7 @@ export default function Dashboard() {
         rsi: result.analysis?.rsi_value,
         macd: result.analysis?.macd_value,
         adx: result.analysis?.adx_value,
-        detailedAnalysis: result.analysis?.detailed_analysis || "Detaylı açıklama bulunamadı.",
+        detailedAnalysis: result.analysis?.detailed_analysis || "Detaylı analiz verisi bulunamadı.",
         strategies: result.strategies || []
       };
 
@@ -60,7 +58,7 @@ export default function Dashboard() {
         <main className="p-6 overflow-auto">
           <h1 className="text-xl font-bold mb-4">Dashboard</h1>
 
-          {/* Veri Girişi */}
+          {/* Analiz Başlatma Alanı */}
           <div className="bg-white p-6 rounded-lg shadow mb-6">
             <h2 className="text-lg font-semibold mb-4">Analiz Başlat</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -88,20 +86,29 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Analiz Geri Bildirimleri */}
+          {/* Analiz Sonuçları */}
           {feedbacks.map((item, idx) => (
             <div key={idx} className="bg-white p-6 rounded-lg shadow mb-6">
-              <h2 className="text-lg font-bold text-indigo-700">{item.symbol} ({item.interval})</h2>
-              <p className="text-sm text-gray-500 mb-2">Trend: {item.trendDirection} ({item.trendStrength}%)</p>
-              <p className="text-sm text-gray-500 mb-2">RSI: {item.rsi} | MACD: {item.macd} | ADX: {item.adx}</p>
-              <p className="text-sm mt-2">{item.detailedAnalysis}</p>
+              <h2 className="text-xl font-bold text-indigo-600 mb-2">{item.symbol} ({item.interval})</h2>
+              <div className="text-gray-700 space-y-1 text-sm">
+                <p><strong>Trend Yönü:</strong> {item.trendDirection} ({item.trendStrength}%)</p>
+                <p><strong>RSI:</strong> {item.rsi}</p>
+                <p><strong>MACD:</strong> {item.macd}</p>
+                <p><strong>ADX:</strong> {item.adx}</p>
+              </div>
 
-              {item.strategies && item.strategies.length > 0 && (
+              {/* Detaylı Analiz */}
+              <div className="mt-4 p-4 bg-gray-50 rounded-lg text-gray-600 text-sm whitespace-pre-line">
+                {item.detailedAnalysis}
+              </div>
+
+              {/* Strateji Önerileri */}
+              {item.strategies.length > 0 && (
                 <div className="mt-4">
-                  <h3 className="font-semibold text-md text-green-700 mb-2">Strateji Sonuçları:</h3>
-                  <ul className="list-disc ml-5">
+                  <h3 className="font-semibold text-md text-green-700 mb-2">Strateji Önerileri:</h3>
+                  <ul className="list-disc ml-5 space-y-1">
                     {item.strategies.map((strategy, i) => (
-                      <li key={i} className="text-sm">
+                      <li key={i}>
                         <strong>{strategy.name}:</strong> {strategy.explanation}
                       </li>
                     ))}
