@@ -8,15 +8,16 @@ from app.strategy_matcher import run_all_strategies
 
 router = APIRouter()
 
-@router.post("/api/analyze")
+@router.post("/analyze")
 async def analyze_data(request: Request):
     try:
         body = await request.json()
         candles = body.get("candles", [])
 
         if not candles or not isinstance(candles, list):
-            raise HTTPException(status_code=400, detail="Candles verisi eksik veya hatalı.")
+            raise HTTPException(status_code=400, detail="Gönderilen candles verisi hatalı veya eksik.")
 
+        # Candle verilerini dataframe'e çeviriyoruz
         df = pd.DataFrame(candles, columns=["timestamp", "open", "high", "low", "close", "volume"])
         df["timestamp"] = pd.to_datetime(df["timestamp"], unit="ms")
         df.set_index("timestamp", inplace=True)
@@ -41,11 +42,11 @@ async def analyze_data(request: Request):
         elif indicator_values["trend_strength"] <= 35:
             trend_direction = "Aşağı"
 
-        strategies = []
         try:
             strategies = run_all_strategies(df)
         except Exception as e:
             print(f"Strateji hesaplama hatası: {e}")
+            strategies = []
 
         return {
             "status": "ok",
@@ -54,7 +55,7 @@ async def analyze_data(request: Request):
                 "average_volume": indicator_values["average_volume"],
                 "trend_direction": trend_direction,
                 "trend_strength_percent": indicator_values["trend_strength"],
-                "detailed_analysis": "İndikatörlere göre genel piyasa yorumu."
+                "detailed_analysis": "İndikatörlere göre piyasa analizi tamamlandı."
             },
             "indicator_values": indicator_values,
             "strategies": strategies
