@@ -2,7 +2,7 @@
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app import analyze  # <- sadece burası düzeltildi (routes çıkarıldı)
+from app.routers.analyze import router as analyze_router  # analyze.py içindeki router'ı doğru yerden alıyoruz
 
 app = FastAPI()
 
@@ -21,4 +21,4 @@ async def root():
     return {"message": "Trade Analyze API çalışıyor."}
 
 # Analyze route'unu ekle
-app.include_router(analyze.router)
+app.include_router(analyze_router)  # artık ImportError alınmayacak
