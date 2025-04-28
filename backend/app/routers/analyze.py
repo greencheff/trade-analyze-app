@@ -49,8 +49,8 @@ def run_all_strategies(df):
             result, explanation = func(df)
             strategies.append({
                 "name": name,
-                "signal": result,
-                "explanation": explanation
+                "signal": bool(result),  # Buraya dikkat! (bool dönüşümü garanti ediyoruz)
+                "explanation": str(explanation)  # String'e dönüştürdük
             })
         except Exception as e:
             strategies.append({
@@ -98,11 +98,11 @@ async def analyze_data(request: Request):
         except ZeroDivisionError:
             trend_strength = 0.0
 
-        rsi_value = calculate_rsi(df, period=rsi_period).iloc[-1]
-        ema_value = calculate_ema(df, period=14).iloc[-1]
-        macd_value = calculate_macd(df)[0].iloc[-1]
-        stochastic_k_value = calculate_stochastic_rsi(df).iloc[-1]
-        adx_value = calculate_adx(df).iloc[-1]
+        rsi_value = round(calculate_rsi(df, period=rsi_period).iloc[-1], 2)
+        ema_value = round(calculate_ema(df, period=14).iloc[-1], 2)
+        macd_value = round(calculate_macd(df)[0].iloc[-1], 2)
+        stochastic_k_value = round(calculate_stochastic_rsi(df).iloc[-1], 2)
+        adx_value = round(calculate_adx(df).iloc[-1], 2)
 
         strategy_results = run_all_strategies(df)
 
@@ -118,11 +118,11 @@ async def analyze_data(request: Request):
                 "lowest_price": lowest_price,
                 "trend_direction": trend_direction,
                 "trend_strength_percent": trend_strength,
-                "rsi_value": round(rsi_value, 2),
-                "ema_value": round(ema_value, 2),
-                "macd_value": round(macd_value, 2),
-                "stochastic_k_value": round(stochastic_k_value, 2),
-                "adx_value": round(adx_value, 2),
+                "rsi_value": rsi_value,
+                "ema_value": ema_value,
+                "macd_value": macd_value,
+                "stochastic_k_value": stochastic_k_value,
+                "adx_value": adx_value,
             },
             "strategies": strategy_results
         })
