@@ -1,85 +1,79 @@
-# analyze.py
+# backend/app/analyze.py
 
-from fastapi import APIRouter, Request, HTTPException
+from fastapi import APIRouter, HTTPException
 import pandas as pd
-import inspect
+import numpy as np
 from app.indicators import *
 from app.strategy_matcher import run_all_strategies
 
 router = APIRouter()
 
-def compute_indicators(df):
-    indicator_values = {}
-
-    for name, func in globals().items():
-        if callable(func) and name.startswith("calculate_"):
-            try:
-                sig = inspect.signature(func)
-                params = sig.parameters
-
-                if len(params) == 1 or 'df' in params:
-                    result = func(df)
-                else:
-                    continue
-
-                if isinstance(result, tuple):
-                    for idx, value in enumerate(result):
-                        if hasattr(value, 'iloc'):
-                            indicator_values[f"{name}_{idx}"] = float(value.iloc[-1])
-                        else:
-                            indicator_values[f"{name}_{idx}"] = float(value)
-                elif hasattr(result, 'iloc'):
-                    indicator_values[name] = float(result.iloc[-1])
-                else:
-                    indicator_values[name] = float(result)
-
-            except Exception as e:
-                print(f"İndikatör çalıştırılamadı: {name} -> {e}")
-                continue
-
-    return indicator_values
-
-@router.post("/api/analyze")
-async def analyze(request: Request):
+@router.post("/analyze")
+async def analyze_data(data: dict):
     try:
-        body = await request.json()
-        candles = body.get("candles")
+        symbol = data.get("symbol", "BTCUSDT")
+        interval = data.get("interval", "1m")
+        candles = data.get("candles", [])
 
-        if not candles or not isinstance(candles, list):
-            raise HTTPException(status_code=400, detail="Gönderilen veride 'candles' listesi eksik veya hatalı.")
+        if not candles or len(candles) < 10:
+            raise HTTPException(status_code=400, detail="Yetersiz veri: candle datası eksik veya boş.")
 
-        df = pd.DataFrame(candles)
+        # DataFrame'e çevir
+        df = pd.DataFrame(candles, columns=["timestamp", "open", "high", "low", "close", "volume"])
+        df["timestamp"] = pd.to_datetime(df["timestamp"], unit="ms")
+        df.set_index("timestamp", inplace=True)
 
-        required_columns = {'open', 'high', 'low', 'close', 'volume'}
-        if not required_columns.issubset(df.columns):
-            raise HTTPException(status_code=400, detail="Gönderilen verilerde 'open', 'high', 'low', 'close', 'volume' kolonları eksik.")
+        # Sayısal alanlar float olsun
+        df = df.astype(float)
 
-        indicator_values = compute_indicators(df)
-        strategies = run_all_strategies(df)
+        # --- İndikatör Hesaplamaları ---
+        indicator_results = {}
 
-        trend_strength_percent = indicator_values.get('trend_strength_percent', 50)
+        try:
+            indicator_results["RSI"] = calculate_rsi(df, 14).iloc[-1]
+            indicator_results["MACD"] = calculate_macd(df)[0].iloc[-1]
+            indicator_results["ADX"] = calculate_adx(df, 14).iloc[-1]
+            indicator_results["Trend Strength %"] = trend_strength_percent(df, 14).iloc[-1]
+            indicator_results["Kapanış Ortalaması"] = average_close(df).iloc[-1]
+            indicator_results["İşlem Hacmi Ortalaması"] = average_volume(df).iloc[-1]
+        except Exception as e:
+            print(f"İndikatör hesaplama hatası: {e}")
+            raise HTTPException(status_code=500, detail=f"İndikatör hesaplama hatası: {str(e)}")
 
-        if trend_strength_percent > 60:
-            trend_direction = "Yukarı"
-        elif trend_strength_percent < 40:
-            trend_direction = "Aşağı"
-        else:
-            trend_direction = "Yatay"
+        # --- Trend Yönü Belirleme ---
+        try:
+            if indicator_results["Trend Strength %"] >= 65:
+                trend_yonu = "Yukarı"
+            elif indicator_results["Trend Strength %"] <= 35:
+                trend_yonu = "Aşağı"
+            else:
+                trend_yonu = "Yatay"
+        except:
+            trend_yonu = "Bilinmiyor"
 
-        return {
-            "status": "ok",
-            "candles_count": len(candles),
-            "summary": {
-                "average_close": indicator_values.get("average_close"),
-                "average_volume": indicator_values.get("average_volume"),
-                "trend_direction": trend_direction,
-                "trend_strength_percent": trend_strength_percent,
-                "detailed_analysis": "İndikatörlere göre genel piyasa analizi yapılmıştır."
-            },
-            "indicator_values": indicator_values,
-            "strategies": strategies
+        # --- Strateji Önerileri ---
+        try:
+            strateji_onerileri = run_all_strategies(df)
+        except Exception as e:
+            print(f"Strateji hesaplama hatası: {e}")
+            strateji_onerileri = []
+
+        # Sonuç
+        result = {
+            "symbol": symbol,
+            "interval": interval,
+            "trend_yonu": trend_yonu,
+            "rsi": round(indicator_results["RSI"], 2),
+            "macd": round(indicator_results["MACD"], 2) if pd.notna(indicator_results["MACD"]) else None,
+            "adx": round(indicator_results["ADX"], 2),
+            "trend_strength": round(indicator_results["Trend Strength %"], 2),
+            "average_close": round(indicator_results["Kapanış Ortalaması"], 2),
+            "average_volume": round(indicator_results["İşlem Hacmi Ortalaması"], 2),
+            "strateji_onerileri": strateji_onerileri
         }
 
+        return result
+
     except Exception as e:
-        print(f"Sunucu tarafı hata: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Sunucu tarafında hata oluştu: {str(e)}")
+        print(f"Genel analiz hatası: {e}")
+        raise HTTPException(status_code=500, detail=f"Genel analiz hatası: {str(e)}")
