@@ -3,8 +3,8 @@
 from fastapi import APIRouter, Request, HTTPException
 import pandas as pd
 import inspect
-from indicators import *
-from strategy_matcher import run_all_strategies
+from app.indicators import *
+from app.strategy_matcher import run_all_strategies
 
 router = APIRouter()
 
