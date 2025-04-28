@@ -2,23 +2,20 @@
 
 import axios from 'axios';
 
-const API_URL = 'https://trade-analyze-backend.onrender.com/api/analyze';
+// Backend URL güncellendi:
+const API_URL = 'https://trade-analyze-app-1.onrender.com/api/analyze';
 const BINANCE_API_URL = 'https://api.binance.com/api/v3/klines';
 
 export async function analyzeCandles(symbol, interval) {
   try {
     // 1. Binance'tan candles verisi çek
     const binanceResponse = await axios.get(BINANCE_API_URL, {
-      params: {
-        symbol: symbol,
-        interval: interval,
-        limit: 100,
-      },
+      params: { symbol, interval, limit: 100 },
     });
 
     // 2. Zaman bilgisini de içerecek şekilde candles dizisini oluştur
     const candles = binanceResponse.data.map(item => ({
-      timestamp: item[0],                  // eklenen timestamp
+      timestamp: item[0],
       open:     parseFloat(item[1]),
       high:     parseFloat(item[2]),
       low:      parseFloat(item[3]),
@@ -29,15 +26,15 @@ export async function analyzeCandles(symbol, interval) {
     // 3. FastAPI'ye candles verisini gönder
     const response = await axios.post(API_URL, { candles });
 
-    if (response.data && response.data.status === "ok") {
+    if (response.data?.status === 'ok') {
       return {
         indicator_values: response.data.indicator_values || {},
         summary:          response.data.summary          || {},
         strategies:       response.data.strategies       || [],
       };
-    } else {
-      throw new Error('API yanıtı başarısız.');
     }
+    throw new Error('API yanıtı başarısız.');
+
   } catch (error) {
     console.error('Veri çekme veya analiz etme hatası:', error);
     throw new Error('Veri çekme veya analiz hatası oluştu.');
