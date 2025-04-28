@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Sidebar from '../components/Sidebar.jsx';
 import Navbar from '../components/Navbar.jsx';
 import FeedbackList from '../components/FeedbackList.jsx';
+import { analyzeSymbol } from '../api/binanceAnalyze'; // ✅ yeni eklenen import
 
 export default function Dashboard() {
   const [feedbacks, setFeedbacks] = useState([]);
@@ -11,31 +12,22 @@ export default function Dashboard() {
 
   const handleAnalyze = async () => {
     try {
-      const response = await fetch(`https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=100`);
-      const rawData = await response.json();
+      const result = await analyzeSymbol(symbol, interval);
 
-      const candles = rawData.map(item => ({
-        openTime: item[0],
-        open: parseFloat(item[1]),
-        high: parseFloat(item[2]),
-        low: parseFloat(item[3]),
-        close: parseFloat(item[4]),
-        volume: parseFloat(item[5]),
-      }));
-
-      // Burada backend analizi bekleniyor, ancak test için local veriyle devam ediyoruz
-      const testResult = {
-        message: `Başarıyla ${candles.length} veri noktası alındı.`,
-        strategies: [],
-      };
-
-      setFeedbacks((prev) => [testResult, ...prev]);
-      if (testResult?.strategies) {
-        setStrategies(testResult.strategies);
+      if (result.success) {
+        setFeedbacks((prev) => [{
+          message: result.message,
+          candles: result.candles,
+        }, ...prev]);
+        if (result?.strategies) {
+          setStrategies(result.strategies);
+        }
+      } else {
+        alert(result.message || 'Analiz sırasında bir hata oluştu.');
       }
     } catch (error) {
-      console.error('Veri çekme hatası:', error);
-      alert('Veri çekilirken hata oluştu. Lütfen tekrar deneyin.');
+      console.error('Analiz sırasında hata:', error);
+      alert('Bir hata oluştu.');
     }
   };
 
