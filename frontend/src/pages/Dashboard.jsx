@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Sidebar from '../components/Sidebar';
 import Navbar from '../components/Navbar';
-import { analyzeCandles } from '../api/binanceAnalyze'; 
+import { analyzeCandles } from '../api/binanceAnalyze';
 import IndicatorDropdown from '../components/IndicatorDropdown'; // 🔥 Ekledik
 
 export default function Dashboard() {
@@ -45,7 +45,7 @@ export default function Dashboard() {
       };
 
       setFeedbacks(prev => [feedbackItem, ...prev]);
-      setIndicatorValues(result.indicator_values || {}); // 🔥 İndikatör değerlerini de kaydet
+      setIndicatorValues(result.indicator_values || {}); // 🔥 indicatorValues kaydediyoruz
     } catch (error) {
       console.error('Veri çekme veya analiz hatası:', error);
       alert('Veri çekilirken veya analiz edilirken hata oluştu. Lütfen tekrar deneyin.');
@@ -71,10 +71,10 @@ export default function Dashboard() {
         <main className="p-6 overflow-auto">
           <h1 className="text-xl font-bold mb-4">Dashboard</h1>
 
-          {/* 🔥 İndikatör Seçimi Alanı */}
+          {/* 🔥 İndikatör Dropdown Alanı */}
           {Object.keys(indicatorValues).length > 0 && (
             <div className="bg-white p-6 rounded-lg shadow mb-6">
-              <h2 className="text-lg font-semibold mb-4">İndikatör Seç</h2>
+              <h2 className="text-lg font-semibold mb-4">İndikatör Seçimi</h2>
               <IndicatorDropdown
                 indicatorValues={indicatorValues}
                 onAnalyze={handleIndicatorAnalyze}
@@ -89,7 +89,7 @@ export default function Dashboard() {
             </div>
           )}
 
-          {/* Analiz Başlatma Alanı */}
+          {/* 🔥 Eski Analiz Başlat Alanı */}
           <div className="bg-white p-6 rounded-lg shadow mb-6">
             <h2 className="text-lg font-semibold mb-4">Analiz Başlat</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -117,7 +117,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Analiz Sonuçları */}
+          {/* 🔥 Feedback Alanı */}
           {feedbacks.map((item, idx) => (
             <div key={idx} className="bg-white p-6 rounded-lg shadow mb-6">
               <h2 className="text-xl font-bold text-indigo-600 mb-2">{item.symbol} ({item.interval})</h2>
