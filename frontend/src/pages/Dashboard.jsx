@@ -2,7 +2,7 @@ import { useState } from 'react';
 import Sidebar from '../components/Sidebar.jsx';
 import Navbar from '../components/Navbar.jsx';
 import FeedbackList from '../components/FeedbackList.jsx';
-import { analyzeSymbol } from '../api/binanceAnalyze'; // ✅ yeni eklenen import
+import { analyzeCandles } from '../api/binanceAnalyze'; // Bunu ekledik
 
 export default function Dashboard() {
   const [feedbacks, setFeedbacks] = useState([]);
@@ -12,22 +12,29 @@ export default function Dashboard() {
 
   const handleAnalyze = async () => {
     try {
-      const result = await analyzeSymbol(symbol, interval);
+      // Binance'ten gerçek veri çek
+      const response = await fetch(`https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=100`);
+      const rawData = await response.json();
 
-      if (result.success) {
-        setFeedbacks((prev) => [{
-          message: result.message,
-          candles: result.candles,
-        }, ...prev]);
-        if (result?.strategies) {
-          setStrategies(result.strategies);
-        }
-      } else {
-        alert(result.message || 'Analiz sırasında bir hata oluştu.');
+      const candles = rawData.map(item => ({
+        openTime: item[0],
+        open: parseFloat(item[1]),
+        high: parseFloat(item[2]),
+        low: parseFloat(item[3]),
+        close: parseFloat(item[4]),
+        volume: parseFloat(item[5]),
+      }));
+
+      // Backend API'ye gönderip analiz ettir
+      const analyzeResult = await analyzeCandles(candles);
+
+      setFeedbacks(prev => [analyzeResult, ...prev]);
+      if (analyzeResult?.strategies) {
+        setStrategies(analyzeResult.strategies);
       }
     } catch (error) {
-      console.error('Analiz sırasında hata:', error);
-      alert('Bir hata oluştu.');
+      console.error('Veri çekme veya analiz hatası:', error);
+      alert('Analiz sırasında hata oluştu. Lütfen tekrar deneyin.');
     }
   };
 
