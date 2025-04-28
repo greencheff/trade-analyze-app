@@ -1,26 +1,23 @@
-import { fetchBinanceCandles } from './binanceApi';
+// src/api/binanceAnalyze.js
 
-export async function analyzeSymbol(symbol, interval) {
+export async function analyzeCandles(candles) {
   try {
-    const candles = await fetchBinanceCandles(symbol, interval);
+    const response = await fetch('https://trade-analyze-backend.onrender.com/api/analyze', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ candles }),
+    });
 
-    if (!candles || candles.length === 0) {
-      throw new Error('Veri çekilemedi veya boş veri döndü.');
+    if (!response.ok) {
+      throw new Error('Analiz isteği başarısız oldu.');
     }
 
-    // Şu anda sadece veri çekiyoruz, backend analizi yok. 
-    // İstersen burada bir test analizi simüle edebiliriz.
-    return {
-      success: true,
-      candles,
-      message: `${symbol} için ${candles.length} adet mum verisi başarıyla alındı.`,
-      strategies: [], // Şimdilik boş, ileride strateji analizi ekleyeceğiz
-    };
+    const data = await response.json();
+    return data;
   } catch (error) {
-    console.error('Sembol analiz hatası:', error);
-    return {
-      success: false,
-      message: error.message || 'Analiz sırasında bir hata oluştu.',
-    };
+    console.error('Analyze API Hatası:', error);
+    throw error;
   }
 }
