@@ -3,15 +3,16 @@
 import { useState } from 'react';
 import Sidebar from '../components/Sidebar';
 import Navbar from '../components/Navbar';
-import { analyzeCandles } from '../api/binanceAnalyze'; // 🔥 doğru import
-import IndicatorDropdown from '../components/IndicatorDropdown';
+import { analyzeCandles } from '../api/binanceAnalyze'; 
+import IndicatorDropdown from '../components/IndicatorDropdown'; // 🔥 Ekledik
 
 export default function Dashboard() {
-  // Buradan sonra senin diğer kodların aynı şekilde devam edecek...
   const [feedbacks, setFeedbacks] = useState([]);
   const [symbol, setSymbol] = useState('BTCUSDT');
   const [interval, setInterval] = useState('1m');
   const [loading, setLoading] = useState(false);
+  const [indicatorValues, setIndicatorValues] = useState({});
+  const [selectedIndicatorResult, setSelectedIndicatorResult] = useState(null);
 
   const handleAnalyze = async () => {
     setLoading(true);
@@ -44,11 +45,21 @@ export default function Dashboard() {
       };
 
       setFeedbacks(prev => [feedbackItem, ...prev]);
+      setIndicatorValues(result.indicator_values || {}); // 🔥 İndikatör değerlerini de kaydet
     } catch (error) {
       console.error('Veri çekme veya analiz hatası:', error);
       alert('Veri çekilirken veya analiz edilirken hata oluştu. Lütfen tekrar deneyin.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleIndicatorAnalyze = (selected) => {
+    if (selected && indicatorValues[selected] !== undefined) {
+      setSelectedIndicatorResult({
+        name: selected,
+        value: indicatorValues[selected],
+      });
     }
   };
 
@@ -59,6 +70,24 @@ export default function Dashboard() {
         <Navbar />
         <main className="p-6 overflow-auto">
           <h1 className="text-xl font-bold mb-4">Dashboard</h1>
+
+          {/* 🔥 İndikatör Seçimi Alanı */}
+          {Object.keys(indicatorValues).length > 0 && (
+            <div className="bg-white p-6 rounded-lg shadow mb-6">
+              <h2 className="text-lg font-semibold mb-4">İndikatör Seç</h2>
+              <IndicatorDropdown
+                indicatorValues={indicatorValues}
+                onAnalyze={handleIndicatorAnalyze}
+              />
+
+              {selectedIndicatorResult && (
+                <div className="mt-4 p-4 border rounded bg-gray-100">
+                  <h3 className="text-lg font-semibold">{selectedIndicatorResult.name}</h3>
+                  <p>Değer: {JSON.stringify(selectedIndicatorResult.value)}</p>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Analiz Başlatma Alanı */}
           <div className="bg-white p-6 rounded-lg shadow mb-6">
