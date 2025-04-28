@@ -841,4 +841,11 @@ def calculate_seasonal_tendency(df, column='close'):
     monthly = df2[column].pct_change().groupby(df2['month']).transform('mean')
     return monthly
 
+def trend_strength_percent(df, period=14):
+    """
+    ADX değerini alıp 0-100 ölçeğinde trend gücünü döndürür.
+    """
+    return calculate_adx(df, period)
+
+
 
