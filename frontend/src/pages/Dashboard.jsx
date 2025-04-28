@@ -3,7 +3,7 @@ import Sidebar from '../components/Sidebar.jsx';
 import Navbar from '../components/Navbar.jsx';
 import WebhookForm from '../components/WebhookForm.jsx';
 import FeedbackList from '../components/FeedbackList.jsx';
-import BinanceFetcher from '../components/BinanceFetcher.jsx'; // EKLENDİ
+import BinanceFetcher from '../components/BinanceFetcher.jsx';
 
 export default function Dashboard() {
   const [feedbacks, setFeedbacks] = useState([]);
@@ -25,11 +25,20 @@ export default function Dashboard() {
           <h1 className="text-xl font-bold mb-4">Dashboard</h1>
 
           {/* Binance Verisi Çekme */}
-          <BinanceFetcher />
+          <div className="bg-white p-6 rounded-lg shadow mb-6">
+            <h2 className="text-lg font-semibold mb-4">Binance'dan Gerçek Zamanlı Veri Çek</h2>
+            <BinanceFetcher />
+          </div>
 
           {/* Form ve Sonuçlar */}
-          <WebhookForm onResult={handleResult} />
-          <FeedbackList items={feedbacks} />
+          <div className="bg-white p-6 rounded-lg shadow mb-6">
+            <WebhookForm onResult={handleResult} />
+          </div>
+
+          {/* Analiz Geri Bildirimleri */}
+          <div className="bg-white p-6 rounded-lg shadow mb-6">
+            <FeedbackList items={feedbacks} />
+          </div>
 
           {/* Strateji Sonuçları */}
           {strategies.length > 0 && (
