@@ -2,7 +2,7 @@
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import analyze  # Doğru import bu şekilde!
+from app.routers import analyze  
 
 app = FastAPI()
 
@@ -15,8 +15,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Router'ı ekle
-app.include_router(analyze.router)
+# Router'ı ekle (BURAYA DİKKAT: prefix="/api")
+app.include_router(analyze.router, prefix="/api")
 
 @app.get("/")
 def read_root():
