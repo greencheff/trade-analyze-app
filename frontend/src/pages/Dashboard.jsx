@@ -26,9 +26,9 @@ export default function Dashboard() {
         averageVolume: result.summary?.average_volume,
         trendDirection: result.summary?.trend_direction,
         trendStrength: result.summary?.trend_strength_percent,
-        rsi: result.indicator_values?.rsi_value,
-        macd: result.indicator_values?.macd_value,
-        adx: result.indicator_values?.adx_value,
+        rsi: result.indicator_values?.calculate_rsi, // 🔥 DEĞİŞTİRİLDİ
+        macd: result.indicator_values?.calculate_macd, // 🔥 DEĞİŞTİRİLDİ
+        adx: result.indicator_values?.calculate_adx, // 🔥 DEĞİŞTİRİLDİ
         detailedAnalysis: result.summary?.detailed_analysis || "Detaylı analiz verisi bulunamadı.",
         strategies: result.strategies || []
       };
