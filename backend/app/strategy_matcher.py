@@ -1,91 +1,108 @@
-from app.indicators import (
-    calculate_rsi,
-    calculate_macd,
-    calculate_ema,
-    calculate_bollinger_bands,
-    calculate_atr,
-    calculate_stochastic_rsi,
-    calculate_adx,
-    calculate_cci,
-    calculate_vwap,
-    calculate_obv,
-)
-
-# --- Strategy Signals ---
+# strategy_matcher.py
 
 def momentum_long_signal(df):
-    rsi = calculate_rsi(df, period=14).iloc[-1]
-    macd, signal_line, histogram = calculate_macd(df)
-    macd_value = macd.iloc[-1]
-
-    signal = rsi < 30 and macd_value > 0
-    explanation = f"RSI: {rsi:.2f} (<30) ve MACD: {macd_value:.2f} (>0) - {'AL' if signal else 'BEKLE'}"
-    return signal, explanation
+    try:
+        if 'rsi' in df.columns and df['rsi'].iloc[-1] < 30:
+            return True, "RSI aşırı satım bölgesinde. Alım fırsatı olabilir."
+    except:
+        pass
+    return False, "RSI aşırı satım bölgesinde değil."
 
 def mean_reversion_short_signal(df):
-    upper_band, lower_band = calculate_bollinger_bands(df)
-    close = df['close'].iloc[-1]
-
-    signal = close > upper_band.iloc[-1]
-    explanation = f"Close: {close:.2f} > Upper Band: {upper_band.iloc[-1]:.2f} - {'SAT' if signal else 'BEKLE'}"
-    return signal, explanation
+    try:
+        if 'rsi' in df.columns and df['rsi'].iloc[-1] > 70:
+            return True, "RSI aşırı alım bölgesinde. Satış fırsatı olabilir."
+    except:
+        pass
+    return False, "RSI aşırı alım bölgesinde değil."
 
 def trend_following_long_signal(df):
-    ema20 = calculate_ema(df, period=20)
-    ema50 = calculate_ema(df, period=50)
-
-    signal = ema20.iloc[-1] > ema50.iloc[-1]
-    explanation = f"EMA20: {ema20.iloc[-1]:.2f} > EMA50: {ema50.iloc[-1]:.2f} - {'TREND AL' if signal else 'BEKLE'}"
-    return signal, explanation
+    try:
+        if 'calculate_ema' in df.columns and df['close'].iloc[-1] > df['calculate_ema'].iloc[-1]:
+            return True, "Fiyat EMA üzerinde. Yükselen trend mümkün."
+    except:
+        pass
+    return False, "Fiyat EMA üzerinde değil."
 
 def volatility_breakout_signal(df):
-    atr = calculate_atr(df, period=14)
-    high = df['high'].iloc[-1]
-    low = df['low'].iloc[-1]
-
-    signal = (high - low) > atr.iloc[-1]
-    explanation = f"Range: {high - low:.2f} > ATR: {atr.iloc[-1]:.2f} - {'VOLATILITE BREAKOUT' if signal else 'BEKLE'}"
-    return signal, explanation
+    try:
+        if 'calculate_bollinger_bands_0' in df.columns and df['close'].iloc[-1] > df['calculate_bollinger_bands_0'].iloc[-1]:
+            return True, "Fiyat üst Bollinger bandını kırdı. Güçlü yükseliş işareti olabilir."
+    except:
+        pass
+    return False, "Fiyat üst Bollinger bandını aşmadı."
 
 def stochastic_rsi_reversal_signal(df):
-    stoch_rsi = calculate_stochastic_rsi(df).iloc[-1]
-
-    signal = stoch_rsi < 20
-    explanation = f"Stochastic RSI: {stoch_rsi:.2f} (<20) - {'AL' if signal else 'BEKLE'}"
-    return signal, explanation
+    try:
+        if 'stoch_rsi' in df.columns and df['stoch_rsi'].iloc[-1] < 0.2:
+            return True, "Stochastic RSI aşırı satımda. Dönüş gelebilir."
+    except:
+        pass
+    return False, "Stochastic RSI aşırı satımda değil."
 
 def adx_trend_strength_signal(df):
-    adx = calculate_adx(df).iloc[-1]
-
-    signal = adx > 25
-    explanation = f"ADX: {adx:.2f} (>25) - {'GÜÇLÜ TREND' if signal else 'ZAYIF TREND'}"
-    return signal, explanation
+    try:
+        if 'adx' in df.columns and df['adx'].iloc[-1] > 25:
+            return True, "ADX yüksek. Güçlü bir trend var."
+    except:
+        pass
+    return False, "ADX düşük. Belirsiz trend."
 
 def cci_reversal_signal(df):
-    cci = calculate_cci(df).iloc[-1]
-
-    signal = cci < -100
-    explanation = f"CCI: {cci:.2f} (<-100) - {'DİP DÖNÜŞ AL' if signal else 'BEKLE'}"
-    return signal, explanation
+    try:
+        if 'cci' in df.columns and df['cci'].iloc[-1] < -100:
+            return True, "CCI aşırı satım bölgesinde. Yükseliş beklenebilir."
+    except:
+        pass
+    return False, "CCI aşırı satımda değil."
 
 def vwap_trend_follow_signal(df):
-    vwap = calculate_vwap(df).iloc[-1]
-    close = df['close'].iloc[-1]
-
-    signal = close > vwap
-    explanation = f"Close: {close:.2f} > VWAP: {vwap:.2f} - {'TREND AL' if signal else 'BEKLE'}"
-    return signal, explanation
+    try:
+        if 'vwap' in df.columns and df['close'].iloc[-1] > df['vwap'].iloc[-1]:
+            return True, "Fiyat VWAP üzerinde. Yükseliş eğilimi olabilir."
+    except:
+        pass
+    return False, "Fiyat VWAP üzerinde değil."
 
 def obv_breakout_signal(df):
-    obv = calculate_obv(df)
-
-    signal = obv.iloc[-1] > obv.iloc[-2]
-    explanation = f"OBV: {obv.iloc[-2]:.2f} -> {obv.iloc[-1]:.2f} - {'HACİM YÜKSELİŞİ' if signal else 'HACİM ZAYIF'}"
-    return signal, explanation
+    try:
+        if 'obv' in df.columns and df['obv'].iloc[-1] > df['obv'].rolling(window=20).mean().iloc[-1]:
+            return True, "OBV yükseliş sinyali veriyor."
+    except:
+        pass
+    return False, "OBV yükseliş sinyali vermiyor."
 
 def macd_zero_cross_signal(df):
-    macd, signal_line, histogram = calculate_macd(df)
+    try:
+        if 'calculate_macd_0' in df.columns and df['calculate_macd_0'].iloc[-1] > 0:
+            return True, "MACD sıfırın üzerinde. Alım baskısı var."
+    except:
+        pass
+    return False, "MACD sıfırın üzerinde değil."
 
-    signal = macd.iloc[-2] < 0 and macd.iloc[-1] > 0
-    explanation = f"MACD: {macd.iloc[-2]:.2f} -> {macd.iloc[-1]:.2f} - {'SIFIR ÜSTÜNE ÇIKIŞ' if signal else 'BEKLE'}"
-    return signal, explanation
+def run_all_strategies(df):
+    results = {}
+
+    momentum_signal, momentum_explanation = momentum_long_signal(df)
+    mean_reversion_signal, mean_reversion_explanation = mean_reversion_short_signal(df)
+    trend_following_signal, trend_following_explanation = trend_following_long_signal(df)
+    volatility_breakout_signal, volatility_breakout_explanation = volatility_breakout_signal(df)
+    stochastic_rsi_signal, stochastic_rsi_explanation = stochastic_rsi_reversal_signal(df)
+    adx_signal, adx_explanation = adx_trend_strength_signal(df)
+    cci_signal, cci_explanation = cci_reversal_signal(df)
+    vwap_signal, vwap_explanation = vwap_trend_follow_signal(df)
+    obv_signal, obv_explanation = obv_breakout_signal(df)
+    macd_cross_signal, macd_cross_explanation = macd_zero_cross_signal(df)
+
+    results["Momentum"] = momentum_explanation
+    results["Mean Reversion"] = mean_reversion_explanation
+    results["Trend Following"] = trend_following_explanation
+    results["Volatility Breakout"] = volatility_breakout_explanation
+    results["Stochastic RSI Reversal"] = stochastic_rsi_explanation
+    results["ADX Güçlü Trend"] = adx_explanation
+    results["CCI Reversal"] = cci_explanation
+    results["VWAP Trend"] = vwap_explanation
+    results["OBV Breakout"] = obv_explanation
+    results["MACD Zero Cross"] = macd_cross_explanation
+
+    return results
