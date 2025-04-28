@@ -1,4 +1,4 @@
-from indicators import (
+from app.indicators import (
     calculate_rsi,
     calculate_macd,
     calculate_ema,
@@ -14,163 +14,78 @@ from indicators import (
 # --- Strategy Signals ---
 
 def momentum_long_signal(df):
-    rsi = calculate_rsi(df, period=14)
+    rsi = calculate_rsi(df, period=14).iloc[-1]
     macd, signal_line, histogram = calculate_macd(df)
-    ema20 = calculate_ema(df, period=20)
-    ema50 = calculate_ema(df, period=50)
+    macd_value = macd.iloc[-1]
 
-    last_rsi = rsi.iloc[-1]
-    last_histogram = histogram.iloc[-1]
-    last_ema20 = ema20.iloc[-1]
-    last_ema50 = ema50.iloc[-1]
-
-    explanation = []
-
-    if last_rsi < 30:
-        explanation.append("RSI aşırı satım bölgesinde (<30)")
-    if last_histogram > 0:
-        explanation.append("MACD histogramı pozitif bölgeye geçti")
-    if last_ema20 > last_ema50:
-        explanation.append("Kısa vadeli trend (EMA20) uzun vadeli trendin (EMA50) üzerinde")
-
-    if len(explanation) == 3:
-        return True, " ve ".join(explanation)
-    else:
-        return False, "Şartlar tam sağlanmadı"
+    signal = rsi < 30 and macd_value > 0
+    explanation = f"RSI: {rsi:.2f} (<30) ve MACD: {macd_value:.2f} (>0) - {'AL' if signal else 'BEKLE'}"
+    return signal, explanation
 
 def mean_reversion_short_signal(df):
-    upper_band, lower_band = calculate_bollinger_bands(df, period=20)
-    last_close = df['close'].iloc[-1]
-    last_upper = upper_band.iloc[-1]
+    upper_band, lower_band = calculate_bollinger_bands(df)
+    close = df['close'].iloc[-1]
 
-    explanation = []
-
-    if last_close > last_upper:
-        explanation.append("Fiyat üst Bollinger bandının üzerinde (aşırı fiyatlanma)")
-
-    if explanation:
-        return True, " ve ".join(explanation)
-    else:
-        return False, "Şartlar sağlanmadı"
+    signal = close > upper_band.iloc[-1]
+    explanation = f"Close: {close:.2f} > Upper Band: {upper_band.iloc[-1]:.2f} - {'SAT' if signal else 'BEKLE'}"
+    return signal, explanation
 
 def trend_following_long_signal(df):
     ema20 = calculate_ema(df, period=20)
     ema50 = calculate_ema(df, period=50)
 
-    last_ema20 = ema20.iloc[-1]
-    last_ema50 = ema50.iloc[-1]
-
-    explanation = []
-
-    if last_ema20 > last_ema50:
-        explanation.append("EMA20, EMA50'nin üzerinde (yükseliş trendi teyidi)")
-
-    if explanation:
-        return True, " ve ".join(explanation)
-    else:
-        return False, "Şartlar sağlanmadı"
+    signal = ema20.iloc[-1] > ema50.iloc[-1]
+    explanation = f"EMA20: {ema20.iloc[-1]:.2f} > EMA50: {ema50.iloc[-1]:.2f} - {'TREND AL' if signal else 'BEKLE'}"
+    return signal, explanation
 
 def volatility_breakout_signal(df):
     atr = calculate_atr(df, period=14)
-    last_close = df['close'].iloc[-1]
-    previous_close = df['close'].iloc[-2]
-    last_atr = atr.iloc[-1]
+    high = df['high'].iloc[-1]
+    low = df['low'].iloc[-1]
 
-    explanation = []
-
-    if (last_close - previous_close) > last_atr:
-        explanation.append("Fiyat ATR'nin üzerinde güçlü bir breakout gerçekleştirdi")
-
-    if explanation:
-        return True, " ve ".join(explanation)
-    else:
-        return False, "Şartlar sağlanmadı"
+    signal = (high - low) > atr.iloc[-1]
+    explanation = f"Range: {high - low:.2f} > ATR: {atr.iloc[-1]:.2f} - {'VOLATILITE BREAKOUT' if signal else 'BEKLE'}"
+    return signal, explanation
 
 def stochastic_rsi_reversal_signal(df):
-    stoch_rsi = calculate_stochastic_rsi(df, rsi_period=14, stoch_period=14)
-    last_stoch_rsi = stoch_rsi.iloc[-1]
-    previous_stoch_rsi = stoch_rsi.iloc[-2]
+    stoch_rsi = calculate_stochastic_rsi(df).iloc[-1]
 
-    explanation = []
-
-    if previous_stoch_rsi < 0.2 and last_stoch_rsi > 0.2:
-        explanation.append("Stochastic RSI düşük bölgeden yukarı kırılım gösterdi (reversal sinyali)")
-
-    if explanation:
-        return True, " ve ".join(explanation)
-    else:
-        return False, "Şartlar tam sağlanmadı"
+    signal = stoch_rsi < 20
+    explanation = f"Stochastic RSI: {stoch_rsi:.2f} (<20) - {'AL' if signal else 'BEKLE'}"
+    return signal, explanation
 
 def adx_trend_strength_signal(df):
-    adx = calculate_adx(df, period=14)
-    last_adx = adx.iloc[-1]
+    adx = calculate_adx(df).iloc[-1]
 
-    explanation = []
-
-    if last_adx > 25:
-        explanation.append("ADX 25 seviyesinin üzerinde, güçlü trend var")
-
-    if explanation:
-        return True, " ve ".join(explanation)
-    else:
-        return False, "Şartlar sağlanmadı"
+    signal = adx > 25
+    explanation = f"ADX: {adx:.2f} (>25) - {'GÜÇLÜ TREND' if signal else 'ZAYIF TREND'}"
+    return signal, explanation
 
 def cci_reversal_signal(df):
-    cci = calculate_cci(df, period=20)
-    last_cci = cci.iloc[-1]
-    previous_cci = cci.iloc[-2]
+    cci = calculate_cci(df).iloc[-1]
 
-    explanation = []
-
-    if previous_cci < -100 and last_cci > -100:
-        explanation.append("CCI -100 seviyesinden yukarı kırılım gösterdi (potansiyel dönüş sinyali)")
-
-    if explanation:
-        return True, " ve ".join(explanation)
-    else:
-        return False, "Şartlar sağlanmadı"
+    signal = cci < -100
+    explanation = f"CCI: {cci:.2f} (<-100) - {'DİP DÖNÜŞ AL' if signal else 'BEKLE'}"
+    return signal, explanation
 
 def vwap_trend_follow_signal(df):
-    vwap = calculate_vwap(df)
-    last_close = df['close'].iloc[-1]
-    last_vwap = vwap.iloc[-1]
+    vwap = calculate_vwap(df).iloc[-1]
+    close = df['close'].iloc[-1]
 
-    explanation = []
-
-    if last_close > last_vwap:
-        explanation.append("Fiyat VWAP'ın üzerinde, trend güçlü ve devam ediyor")
-
-    if explanation:
-        return True, " ve ".join(explanation)
-    else:
-        return False, "Şartlar sağlanmadı"
+    signal = close > vwap
+    explanation = f"Close: {close:.2f} > VWAP: {vwap:.2f} - {'TREND AL' if signal else 'BEKLE'}"
+    return signal, explanation
 
 def obv_breakout_signal(df):
     obv = calculate_obv(df)
-    last_obv = obv.iloc[-1]
-    previous_obv = obv.iloc[-2]
 
-    explanation = []
-
-    if last_obv > previous_obv:
-        explanation.append("OBV yükseliyor, hacim destekli yükseliş sinyali")
-
-    if explanation:
-        return True, " ve ".join(explanation)
-    else:
-        return False, "Şartlar sağlanmadı"
+    signal = obv.iloc[-1] > obv.iloc[-2]
+    explanation = f"OBV: {obv.iloc[-2]:.2f} -> {obv.iloc[-1]:.2f} - {'HACİM YÜKSELİŞİ' if signal else 'HACİM ZAYIF'}"
+    return signal, explanation
 
 def macd_zero_cross_signal(df):
     macd, signal_line, histogram = calculate_macd(df)
-    last_macd = macd.iloc[-1]
-    previous_macd = macd.iloc[-2]
 
-    explanation = []
-
-    if previous_macd < 0 and last_macd > 0:
-        explanation.append("MACD sıfır çizgisinin üzerine çıktı (pozitif trend başlangıcı)")
-
-    if explanation:
-        return True, " ve ".join(explanation)
-    else:
-        return False, "Şartlar sağlanmadı"
+    signal = macd.iloc[-2] < 0 and macd.iloc[-1] > 0
+    explanation = f"MACD: {macd.iloc[-2]:.2f} -> {macd.iloc[-1]:.2f} - {'SIFIR ÜSTÜNE ÇIKIŞ' if signal else 'BEKLE'}"
+    return signal, explanation
