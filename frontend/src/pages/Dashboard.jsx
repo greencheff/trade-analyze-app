@@ -2,7 +2,7 @@ import { useState } from 'react';
 import Sidebar from '../components/Sidebar.jsx';
 import Navbar from '../components/Navbar.jsx';
 import FeedbackList from '../components/FeedbackList.jsx';
-import { analyzeCandles } from '../api/binanceAnalyze'; // Bunu ekledik
+import { analyzeCandles } from '../api/binanceAnalyze'; // En üstte import
 
 export default function Dashboard() {
   const [feedbacks, setFeedbacks] = useState([]);
@@ -12,7 +12,6 @@ export default function Dashboard() {
 
   const handleAnalyze = async () => {
     try {
-      // Binance'ten gerçek veri çek
       const response = await fetch(`https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=100`);
       const rawData = await response.json();
 
@@ -25,16 +24,26 @@ export default function Dashboard() {
         volume: parseFloat(item[5]),
       }));
 
-      // Backend API'ye gönderip analiz ettir
-      const analyzeResult = await analyzeCandles(candles);
+      // Backend analize gönder
+      const analysisResult = await analyzeCandles(candles);
 
-      setFeedbacks(prev => [analyzeResult, ...prev]);
-      if (analyzeResult?.strategies) {
-        setStrategies(analyzeResult.strategies);
+      // Şimdi doğru feedback formatı hazırlıyoruz:
+      const formattedFeedback = {
+        symbol: symbol,
+        interval: interval,
+        rsi: analysisResult.rsi || '-',    // Gelen analiz verisine göre
+        macd: analysisResult.macd || '-',
+        feedback: analysisResult.feedback || 'Analiz bulunamadı',
+      };
+
+      setFeedbacks(prev => [formattedFeedback, ...prev]);
+      
+      if (analysisResult?.strategies) {
+        setStrategies(analysisResult.strategies);
       }
     } catch (error) {
       console.error('Veri çekme veya analiz hatası:', error);
-      alert('Analiz sırasında hata oluştu. Lütfen tekrar deneyin.');
+      alert('Analiz sırasında hata oluştu.');
     }
   };
 
