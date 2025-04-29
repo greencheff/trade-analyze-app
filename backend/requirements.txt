@@ -10,3 +10,4 @@ ccxt
 alembic
 psycopg2-binary
 pandas-ta==0.3.14b0
+numpy>=1.24
