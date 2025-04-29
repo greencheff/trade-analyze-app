@@ -1,11 +1,11 @@
 import React from 'react';
 
 const strategies = [
-  { value: "mtf_confirmation", label: "Multi Timeframe Trend Onayı (MTF Confirmation)" },
-  { value: "orderblock_rsi_divergence", label: "Order Block + RSI Diverjans Kombinasyonu" },
-  { value: "bollinger_breakout", label: "Bollinger Bandı Sıkışması ve Patlama Stratejisi" },
-  { value: "rsi_divergence", label: "RSI Diverjans (Uyumsuzluk) Stratejisi" },
-  { value: "breakout_volume", label: "Breakout + Volume Onayı Stratejisi" },
+  { value: 'mtf_confirmation', label: 'Multi Timeframe Trend Onayı (MTF Confirmation)' },
+  { value: 'orderblock_rsi_divergence', label: 'Order Block + RSI Diverjans Kombinasyonu' },
+  { value: 'bollinger_breakout', label: 'Bollinger Bandı Sıkışması ve Patlama Stratejisi' },
+  { value: 'rsi_divergence', label: 'RSI Diverjans (Uyumsuzluk) Stratejisi' },
+  { value: 'breakout_volume', label: 'Breakout + Volume Onayı Stratejisi' }
 ];
 
 export default function StrategySelect({ selectedStrategy, setSelectedStrategy }) {
