@@ -181,8 +181,5 @@ export default function Dashboard() {
     </div>
   );
 }
-    const selectedStrategyValue = strategies.find(
-      (s) => s.label === selectedStrategy
-    )?.value;
 
 
