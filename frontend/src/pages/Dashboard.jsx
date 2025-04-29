@@ -1,11 +1,14 @@
+
 import { useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
 import Navbar from '../components/Navbar';
+import StrategySelect from '../components/StrategySelect';
 
 export default function Dashboard() {
   const [symbol, setSymbol] = useState('BTCUSDT');
   const [interval, setInterval] = useState('1m');
   const [selectedIndicator, setSelectedIndicator] = useState('');
+  const [selectedStrategy, setSelectedStrategy] = useState('');
   const [selectedIndicatorResult, setSelectedIndicatorResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [indicators, setIndicators] = useState([]);
@@ -60,6 +63,7 @@ export default function Dashboard() {
         body: JSON.stringify({
           candles: candles,
           selectedIndicator: selectedIndicator,
+          selectedStrategy: selectedStrategy,
         }),
       });
 
@@ -119,6 +123,13 @@ export default function Dashboard() {
                   </option>
                 ))}
               </select>
+            </div>
+
+            <div className="mb-4">
+              <StrategySelect
+                selectedStrategy={selectedStrategy}
+                setSelectedStrategy={setSelectedStrategy}
+              />
             </div>
 
             <button
