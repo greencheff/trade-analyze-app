@@ -54,7 +54,7 @@ export default function Dashboard() {
         volume: parseFloat(item[5]),
       }));
 
-      const response = await fetch('https://trade-analyze-backend.onrender.com/single-indicator', {
+      const response = await fetch('https://trade-analyze-backend.onrender.com/api/single-indicator', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
