@@ -5,7 +5,7 @@ const strategies = [
   { value: 'orderblock_rsi_divergence', label: 'Order Block + RSI Diverjans Kombinasyonu' },
   { value: 'bollinger_breakout', label: 'Bollinger Bandı Sıkışması ve Patlama Stratejisi' },
   { value: 'rsi_divergence', label: 'RSI Diverjans (Uyumsuzluk) Stratejisi' },
-  { value: 'breakout_volume', label: 'Breakout + Volume Onayı Stratejisi' },
+  { value: 'breakout_volume', label: 'Breakout + Volume Onayı Stratejisi' }
 ];
 
 export default function StrategySelect({ selectedStrategy, setSelectedStrategy }) {
