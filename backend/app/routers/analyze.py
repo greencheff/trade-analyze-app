@@ -1,7 +1,7 @@
 import traceback
 from fastapi import APIRouter, Request, HTTPException
 import pandas as pd
-from app.indicators import * 
+from app.indicators import *
 from app.strategy_matcher import run_all_strategies
 
 router = APIRouter()
@@ -21,12 +21,12 @@ async def analyze_data(request: Request):
 
         indicator_values = {}
         try:
-            indicator_values["rsi"]             = calculate_rsi(df, 14).iloc[-1]
-            indicator_values["macd"]            = calculate_macd(df)[0].iloc[-1]
-            indicator_values["adx"]             = calculate_adx(df, 14).iloc[-1]
-            indicator_values["trend_strength"]  = trend_strength_percent(df, 14).iloc[-1]
-            indicator_values["average_close"]   = average_close(df).iloc[-1]
-            indicator_values["average_volume"]  = average_volume(df).iloc[-1]
+            indicator_values["rsi"] = calculate_rsi(df, 14).iloc[-1]
+            indicator_values["macd"] = calculate_macd(df)[0].iloc[-1]
+            indicator_values["adx"] = calculate_adx(df, 14).iloc[-1]
+            indicator_values["trend_strength"] = trend_strength_percent(df, 14).iloc[-1]
+            indicator_values["average_close"] = average_close(df).iloc[-1]
+            indicator_values["average_volume"] = average_volume(df).iloc[-1]
         except Exception as e:
             traceback.print_exc()
             raise HTTPException(500, f"İndikatör hesaplama hatası: {e}")
@@ -56,7 +56,7 @@ async def analyze_data(request: Request):
             },
             "indicator_values": indicator_values,
             "strategies": strategies,
-            "candles": candles  # 🔵 Ekledik: frontend için candles'ı da dönüyoruz
+            "candles": candles
         }
 
     except HTTPException:
@@ -65,7 +65,6 @@ async def analyze_data(request: Request):
         traceback.print_exc()
         raise HTTPException(500, f"Genel analiz hatası: {e}")
 
-# 📌 Burası güncellendi: Seçili indikatör analizi için
 @router.post("/single-indicator")
 async def analyze_single_indicator(request: Request):
     try:
