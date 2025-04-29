@@ -3,10 +3,10 @@ import Sidebar from '../components/Sidebar';
 import Navbar from '../components/Navbar';
 
 export default function Dashboard() {
+  const [symbol, setSymbol] = useState('BTCUSDT');
+  const [interval, setInterval] = useState('1m');
   const [selectedIndicator, setSelectedIndicator] = useState('');
   const [selectedIndicatorResult, setSelectedIndicatorResult] = useState(null);
-  const [symbol, setSymbol] = useState('BTCUSDT'); // Şu anda sabit
-  const [interval, setInterval] = useState('1m');   // 1 dakikalık veriler
   const [loading, setLoading] = useState(false);
   const [indicators, setIndicators] = useState([]);
 
@@ -24,7 +24,6 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
-    // İndikatör listesini backend'den çekiyoruz
     fetch('https://trade-analyze-backend.onrender.com/api/indicators')
       .then((res) => res.json())
       .then((data) => {
@@ -36,15 +35,14 @@ export default function Dashboard() {
   }, []);
 
   const handleAnalyze = async () => {
-    if (!selectedIndicator) {
-      alert('Lütfen bir indikatör seçiniz.');
+    if (!symbol || !interval || !selectedIndicator) {
+      alert('Lütfen sembol, zaman aralığı ve indikatör seçiniz.');
       return;
     }
 
     setLoading(true);
     try {
-      // 🔵 Binance API'den canlı BTCUSDT verisi çekiyoruz
-      const binanceResponse = await fetch(`https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=1000`);
+      const binanceResponse = await fetch(`https://api.binance.com/api/v3/klines?symbol=${symbol.toUpperCase()}&interval=${interval}&limit=1000`);
       const binanceData = await binanceResponse.json();
 
       const candles = binanceData.map(item => ({
@@ -56,7 +54,6 @@ export default function Dashboard() {
         volume: parseFloat(item[5]),
       }));
 
-      // 🔵 Seçili indikatörü backend'e gönderiyoruz
       const response = await fetch('https://trade-analyze-backend.onrender.com/single-indicator', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -93,13 +90,27 @@ export default function Dashboard() {
           <h1 className="text-xl font-bold mb-4">Dashboard</h1>
 
           <div className="bg-white p-6 rounded-lg shadow mb-6">
-            <h2 className="text-lg font-semibold mb-4">İndikatör Seçimi</h2>
+            <h2 className="text-lg font-semibold mb-4">Analiz Başlat</h2>
 
-            <div className="flex gap-4 mb-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <input
+                type="text"
+                value={symbol}
+                onChange={(e) => setSymbol(e.target.value)}
+                placeholder="Sembol (örn: BTCUSDT)"
+                className="border p-2 rounded"
+              />
+              <input
+                type="text"
+                value={interval}
+                onChange={(e) => setInterval(e.target.value)}
+                placeholder="Zaman Aralığı (örn: 1m, 5m, 1h)"
+                className="border p-2 rounded"
+              />
               <select
                 value={selectedIndicator}
                 onChange={(e) => setSelectedIndicator(e.target.value)}
-                className="border p-2 rounded w-full"
+                className="border p-2 rounded"
               >
                 <option value="">Bir İndikatör Seçiniz</option>
                 {indicators.map((indicator) => (
@@ -110,15 +121,13 @@ export default function Dashboard() {
               </select>
             </div>
 
-            <div className="flex gap-4">
-              <button
-                onClick={handleAnalyze}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-full"
-                disabled={loading}
-              >
-                {loading ? 'Analiz Yapılıyor...' : 'Analiz Et'}
-              </button>
-            </div>
+            <button
+              onClick={handleAnalyze}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-full"
+              disabled={loading}
+            >
+              {loading ? 'Analiz Yapılıyor...' : 'Analiz Et'}
+            </button>
           </div>
 
           {selectedIndicatorResult && (
