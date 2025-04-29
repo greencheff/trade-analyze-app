@@ -95,34 +95,3 @@ async def analyze_single_indicator(request: Request):
     except Exception as e:
         traceback.print_exc()
         raise HTTPException(500, f"İndikatör analizi hatası: {e}")
-
-@router.post("/single-indicator")
-async def analyze_single_indicator(request: Request):
-    try:
-        body = await request.json()
-        candles = body.get("candles", [])
-        selected_indicator = body.get("selectedIndicator", "")
-
-        if not selected_indicator:
-            raise HTTPException(400, "İndikatör seçimi eksik.")
-
-        if not candles or not isinstance(candles, list):
-            raise HTTPException(400, "Candle verisi eksik veya hatalı.")
-
-        df = pd.DataFrame(candles, columns=["timestamp", "open", "high", "low", "close", "volume"])
-        df["timestamp"] = pd.to_datetime(df["timestamp"], unit="ms")
-        df.set_index("timestamp", inplace=True)
-        df = df.astype(float)
-
-        indicator_function = getattr(__import__('app.indicators', fromlist=[selected_indicator]), selected_indicator, None)
-
-        if not indicator_function:
-            raise HTTPException(404, "İndikatör bulunamadı.")
-
-        value = indicator_function(df).iloc[-1]
-
-        return {"value": value}
-
-    except Exception as e:
-        traceback.print_exc()
-        raise HTTPException(500, f"İndikatör analizi hatası: {e}")
