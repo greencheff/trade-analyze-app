@@ -10,6 +10,7 @@ export default function Dashboard() {
   const [selectedIndicator, setSelectedIndicator] = useState('');
   const [selectedStrategy, setSelectedStrategy] = useState('');
   const [selectedIndicatorResult, setSelectedIndicatorResult] = useState(null);
+  const [strategyResult, setStrategyResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [indicators, setIndicators] = useState([]);
 
@@ -38,8 +39,8 @@ export default function Dashboard() {
   }, []);
 
   const handleAnalyze = async () => {
-    if (!symbol || !interval || !selectedIndicator) {
-      alert('Lütfen sembol, zaman aralığı ve indikatör seçiniz.');
+    if (!symbol || !interval) {
+      alert('Lütfen sembol ve zaman aralığı giriniz.');
       return;
     }
 
@@ -57,26 +58,39 @@ export default function Dashboard() {
         volume: parseFloat(item[5]),
       }));
 
-      const response = await fetch('https://trade-analyze-backend.onrender.com/api/single-indicator', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          candles: candles,
-          selectedIndicator: selectedIndicator,
-          selectedStrategy: selectedStrategy,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setSelectedIndicatorResult({
-          name: indicatorDisplayNames[selectedIndicator] || selectedIndicator,
-          value: data.value,
+      // İndikatör varsa gönder
+      if (selectedIndicator) {
+        const indicatorResponse = await fetch('https://trade-analyze-backend.onrender.com/api/single-indicator', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ candles, selectedIndicator }),
         });
-      } else {
-        alert(data.detail || 'İndikatör analizi başarısız oldu.');
+        const indicatorData = await indicatorResponse.json();
+        if (indicatorResponse.ok) {
+          setSelectedIndicatorResult({
+            name: indicatorDisplayNames[selectedIndicator] || selectedIndicator,
+            value: indicatorData.value,
+          });
+        } else {
+          alert(indicatorData.detail || 'İndikatör analizi başarısız.');
+        }
       }
+
+      // Strateji varsa gönder
+      if (selectedStrategy) {
+        const strategyResponse = await fetch('https://trade-analyze-backend.onrender.com/api/strategy-signal', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ candles, strategy: selectedStrategy }),
+        });
+        const strategyData = await strategyResponse.json();
+        if (strategyResponse.ok) {
+          setStrategyResult(strategyData.strategy_result);
+        } else {
+          alert(strategyData.detail || 'Strateji analizi başarısız.');
+        }
+      }
+
     } catch (error) {
       console.error('Analiz hatası:', error);
       alert('Analiz sırasında hata oluştu.');
@@ -142,11 +156,18 @@ export default function Dashboard() {
           </div>
 
           {selectedIndicatorResult && (
-            <div className="bg-white p-6 rounded-lg shadow">
+            <div className="bg-white p-6 rounded-lg shadow mb-4">
               <h2 className="text-lg font-bold text-indigo-600 mb-2">{selectedIndicatorResult.name}</h2>
               <p className="text-gray-700 text-sm">
                 Değer: {JSON.stringify(selectedIndicatorResult.value)}
               </p>
+            </div>
+          )}
+
+          {strategyResult && (
+            <div className="bg-white p-6 rounded-lg shadow mb-4">
+              <h2 className="text-lg font-bold text-green-600 mb-2">Strateji Sonucu</h2>
+              <p className="text-gray-700 text-sm">Sinyal: {strategyResult}</p>
             </div>
           )}
         </main>
