@@ -87,7 +87,13 @@ export default function Dashboard() {
         if (strategyResponse.ok) {
           setStrategyResult(strategyData.strategy_result);
         } else {
-          alert(strategyData.detail || 'Strateji analizi başarısız.');
+          alert(
+            strategyData.detail
+              ? typeof strategyData.detail === 'object'
+                ? JSON.stringify(strategyData.detail)
+                : strategyData.detail
+              : 'Strateji analizi başarısız.'
+          );
         }
       }
 
