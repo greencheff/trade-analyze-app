@@ -55,7 +55,8 @@ async def analyze_data(request: Request):
                 "detailed_analysis": "ADX + RSI + MACD kombinasyonu, neredeyse tüm piyasa koşullarında dengeli ve güvenilir sinyaller üretir."
             },
             "indicator_values": indicator_values,
-            "strategies": strategies
+            "strategies": strategies,
+            "candles": candles  # 🔵 Ekledik: frontend için candles'ı da dönüyoruz
         }
 
     except HTTPException:
@@ -64,7 +65,7 @@ async def analyze_data(request: Request):
         traceback.print_exc()
         raise HTTPException(500, f"Genel analiz hatası: {e}")
 
-# 📌 BURASI YENİ EKLENDİ: Tekli indikatör analizi için
+# 📌 Burası güncellendi: Seçili indikatör analizi için
 @router.post("/single-indicator")
 async def analyze_single_indicator(request: Request):
     try:
@@ -72,8 +73,11 @@ async def analyze_single_indicator(request: Request):
         candles = body.get("candles", [])
         selected_indicator = body.get("selectedIndicator", "")
 
-        if not candles or not isinstance(candles, list) or not selected_indicator:
-            raise HTTPException(400, "Eksik veri gönderildi.")
+        if not selected_indicator:
+            raise HTTPException(400, "İndikatör seçimi eksik.")
+
+        if not candles or not isinstance(candles, list):
+            raise HTTPException(400, "Candle verisi eksik veya hatalı.")
 
         df = pd.DataFrame(candles, columns=["timestamp", "open", "high", "low", "close", "volume"])
         df["timestamp"] = pd.to_datetime(df["timestamp"], unit="ms")
