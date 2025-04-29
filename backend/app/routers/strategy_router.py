@@ -1,43 +1,34 @@
- from fastapi import APIRouter, HTTPException
--from pydantic import BaseModel
--from typing import List, Literal
-+from pydantic import BaseModel
-+from typing import List, Literal
- import pandas as pd
- from app.strategy_signal_scanner import analyze_rsi_divergence_strategy
+from fastapi import APIRouter, HTTPException
+from app.schemas import StrategyRequest
+import pandas as pd
+from app.strategy_signal_scanner import analyze_rsi_divergence_strategy
 
- router = APIRouter()
+router = APIRouter()
 
- class Candle(BaseModel):
-     timestamp: int
-     open: float
-     high: float
-     low: float
-     close: float
-     volume: float
+@router.post("/strategy-signal")
+async def strategy_signal(payload: StrategyRequest):
+    try:
+        # Gönderilen candle verisini DataFrame'e çevir
+        df = pd.DataFrame(
+            payload.candles,
+            columns=["timestamp", "open", "high", "low", "close", "volume"]
+        )
+        df["timestamp"] = pd.to_datetime(df["timestamp"], unit="ms")
+        df.set_index("timestamp", inplace=True)
+        df = df.astype(float)
 
--class StrategyRequest(BaseModel):
--    candles: List[Candle]
--    strategy: Literal["RSI Diverjans (Uyumsuzluk) Stratejisi"]
-+class StrategyRequest(BaseModel):
-+    candles: List[Candle]
-+    strategy: Literal[
-+        "rsi_divergence",
-+        "mtf_confirmation",
-+        "orderblock_rsi_divergence",
-+        "bollinger_breakout",
-+        "breakout_volume"
-+    ]
+        # Seçilen stratejiye göre çalıştır
+        if payload.strategy == "rsi_divergence":
+            result = analyze_rsi_divergence_strategy(df)
+        else:
+            # Diğer stratejileri de burada ekleyebilirsin
+            raise HTTPException(
+                status_code=404,
+                detail=f"Strateji '{payload.strategy}' henüz desteklenmiyor."
+            )
 
- @router.post("/strategy-signal")
- async def strategy_signal(request: StrategyRequest):
-     df = pd.DataFrame([c.dict() for c in request.candles])
-
--    if request.strategy == "RSI Diverjans (Uyumsuzluk) Stratejisi":
--        result = analyze_rsi_divergence_strategy(df)
-+    if request.strategy == "rsi_divergence":
-+        result = analyze_rsi_divergence_strategy(df)
-     else:
-         raise HTTPException(status_code=400, detail="Strateji tanınmadı.")
-
-     return {"strategy_result": result}
+        return {"strategy_result": result}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
