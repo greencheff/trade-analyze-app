@@ -8,6 +8,11 @@ from app.strategy_signal_scanner import (
     analyze_orderblock_rsi_divergence_strategy,
     analyze_bollinger_breakout_strategy,
     analyze_breakout_volume_strategy,
+    analyze_ema_ribbon_trend_strategy,
+    analyze_stochastic_rsi_momentum_strategy,
+    analyze_keltner_channel_breakout_strategy,
+    analyze_pivot_point_strategy,
+    analyze_liquidity_sweep_bos_strategy
 )
 
 router = APIRouter()
@@ -34,6 +39,16 @@ async def strategy_signal(payload: StrategyRequest):
         result = analyze_bollinger_breakout_strategy(df)
     elif payload.strategy == "breakout_volume":
         result = analyze_breakout_volume_strategy(df)
+    elif payload.strategy == "ema_ribbon_trend":
+        result = analyze_ema_ribbon_trend_strategy(df)
+    elif payload.strategy == "stochastic_rsi_momentum":
+        result = analyze_stochastic_rsi_momentum_strategy(df)
+    elif payload.strategy == "keltner_channel_breakout":
+        result = analyze_keltner_channel_breakout_strategy(df)
+    elif payload.strategy == "pivot_point_strategy":
+        result = analyze_pivot_point_strategy(df)
+    elif payload.strategy == "liquidity_sweep_bos":
+        result = analyze_liquidity_sweep_bos_strategy(df)
     else:
         raise HTTPException(
             status_code=404,
