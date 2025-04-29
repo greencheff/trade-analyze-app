@@ -1,22 +1,25 @@
 import React from 'react';
 
 const strategies = [
-  { value: 'breakout_volume', label: 'Breakout + Hacim Onayı' },
-  { value: 'mtf_confirmation', label: 'Multi Timeframe Trend Onayı' },
-  { value: 'rsi_divergence', label: 'RSI Diverjans' },
-  { value: 'bollinger_breakout', label: 'Bollinger Bandı Sıkışması' },
-  { value: 'orderblock_rsi_divergence', label: 'Order Block + RSI Diverjans' },
-  { value: 'ema_ribbon_trend', label: 'EMA Ribbon Trend Sistemi' },
-  { value: 'stochastic_rsi_momentum', label: 'Stochastic RSI Momentum Dönüşü' },
-  { value: 'keltner_channel_breakout', label: 'Keltner Channel Breakout' },
-  { value: 'pivot_point_strategy', label: 'Pivot Noktası Stratejisi' },
-  { value: 'liquidity_sweep_bos', label: 'Liquidity Sweep + BOS' }
+  { value: 'breakout_volume', label: 'Breakout + Hacim Onayı (Sahte kırılımlardan kaçınır)' },
+  { value: 'mtf_confirmation', label: 'Multi Timeframe Trend Onayı (Trend piyasasında işlem açar)' },
+  { value: 'rsi_divergence', label: 'RSI Diverjans (Parabolik dönüşleri yakalar)' },
+  { value: 'bollinger_breakout', label: 'Bollinger Bandı Sıkışması (Büyük patlamaları yakalar)' },
+  { value: 'orderblock_rsi_divergence', label: 'Order Block + RSI Diverjans (Smart money izleme)' },
+  { value: 'ema_ribbon', label: 'EMA Ribbon Trend Sistemi (Sağlam trendleri tespit eder)' },
+  { value: 'stochastic_rsi_momentum', label: 'Stochastic RSI Momentum Dönüşü (Hızlı momentum değişimleri yakalar)' },
+  { value: 'keltner_breakout', label: 'Keltner Channel Breakout (Volatilite çıkışlarını yakalar)' },
+  { value: 'pivot_point', label: 'Pivot Noktası Stratejisi (Kısa vadeli güvenilir giriş-çıkış)' },
+  { value: 'liquidity_sweep_bos', label: 'Liquidity Sweep + BOS (Smart money tuzaklarını izler)' },
 ];
 
 export default function StrategySelect({ selectedStrategy, setSelectedStrategy }) {
   return (
     <div style={{ marginBottom: '1rem' }}>
-      <label htmlFor="strategy-select" style={{ fontWeight: 'bold', display: 'block', marginBottom: '0.5rem' }}>
+      <label
+        htmlFor="strategy-select"
+        style={{ fontWeight: 'bold', display: 'block', marginBottom: '0.5rem' }}
+      >
         Strateji Seçimi
       </label>
       <select
@@ -33,3 +36,5 @@ export default function StrategySelect({ selectedStrategy, setSelectedStrategy }
         ))}
       </select>
     </div>
+  );
+}
