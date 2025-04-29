@@ -19,9 +19,9 @@ class StrategyRequest(BaseModel):
         "orderblock_rsi_divergence",
         "bollinger_breakout",
         "breakout_volume",
-        "ema_ribbon_trend",
+        "ema_ribbon",
         "stochastic_rsi_momentum",
-        "keltner_channel_breakout",
-        "pivot_point_strategy",
+        "keltner_breakout",
+        "pivot_point",
         "liquidity_sweep_bos"
     ]
