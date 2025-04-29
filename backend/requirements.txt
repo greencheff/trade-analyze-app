@@ -9,4 +9,4 @@ redis
 ccxt
 alembic
 psycopg2-binary
-pandas-ta
+pandas-ta==0.3.14b0
