@@ -12,9 +12,9 @@ export default function Dashboard() {
   const [selectedIndicator, setSelectedIndicator] = useState('');
   const [selectedIndicatorResult, setSelectedIndicatorResult] = useState(null);
   const [indicators, setIndicators] = useState([]);
+  const [candlesData, setCandlesData] = useState([]); // 🔥 yeni ekledim
 
   useEffect(() => {
-    // İndikatörleri backend'den çekiyoruz
     fetch('https://trade-analyze-backend.onrender.com/api/indicators')
       .then((res) => res.json())
       .then((data) => {
@@ -24,6 +24,20 @@ export default function Dashboard() {
         console.error('İndikatör listesi çekilemedi:', error);
       });
   }, []);
+
+  async function analyzeSingleIndicator(candles, selectedIndicator) {
+    const response = await fetch('https://trade-analyze-backend.onrender.com/api/single-indicator', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ candles, selectedIndicator }),
+    });
+
+    if (!response.ok) {
+      throw new Error('İndikatör analizi başarısız.');
+    }
+
+    return await response.json();
+  }
 
   const handleAnalyze = async () => {
     setLoading(true);
@@ -46,6 +60,7 @@ export default function Dashboard() {
 
       setFeedbacks(prev => [feedbackItem, ...prev]);
       setIndicatorValues(result.indicator_values || {});
+      setCandlesData(result.candles || []); // 🔥 yeni ekledim
     } catch (error) {
       console.error('Veri çekme veya analiz hatası:', error);
       alert('Veri çekilirken veya analiz edilirken hata oluştu.');
@@ -54,12 +69,32 @@ export default function Dashboard() {
     }
   };
 
-  const handleIndicatorAnalyze = () => {
-    if (selectedIndicator && indicatorValues[selectedIndicator] !== undefined) {
+  const handleIndicatorAnalyze = async () => {
+    if (!selectedIndicator) {
+      alert("Lütfen bir indikatör seçin.");
+      return;
+    }
+
+    if (!candlesData.length) {
+      alert("Önce analiz yaparak mum verisi çekmelisiniz.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const result = await analyzeSingleIndicator(candlesData, selectedIndicator);
+
       setSelectedIndicatorResult({
         name: selectedIndicator,
-        value: indicatorValues[selectedIndicator],
+        value: result.value,
       });
+
+    } catch (error) {
+      console.error('İndikatör analizi hatası:', error);
+      alert('İndikatör analizi başarısız.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -99,7 +134,7 @@ export default function Dashboard() {
             {selectedIndicatorResult && (
               <div className="mt-4 p-4 border rounded bg-gray-100">
                 <h3 className="text-lg font-semibold">{selectedIndicatorResult.name}</h3>
-                <p>Değer: {JSON.stringify(selectedIndicatorResult.value)}</p>
+                <p>Değer: {selectedIndicatorResult.value}</p>
               </div>
             )}
           </div>
