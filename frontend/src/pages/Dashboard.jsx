@@ -13,6 +13,21 @@ export default function Dashboard() {
   const [selectedIndicatorResult, setSelectedIndicatorResult] = useState(null);
   const [indicators, setIndicators] = useState([]);
 
+  // 🔵 Kullanıcı dostu isimler için mapping
+  const indicatorDisplayNames = {
+    "calculate_rsi": "RSI",
+    "calculate_macd": "MACD",
+    "calculate_adx": "ADX",
+    "calculate_bollinger_bands": "Bollinger Bands",
+    "calculate_ema": "EMA",
+    "calculate_sma": "SMA",
+    "calculate_atr": "ATR",
+    "calculate_stochastic_oscillator": "Stochastic Oscillator",
+    "calculate_vwap": "VWAP",
+    "calculate_obv": "OBV",
+    // Buraya başka indikatörler de ekleyebilirsin ihtiyaç oldukça
+  };
+
   useEffect(() => {
     // İndikatörleri backend'den çekiyoruz
     fetch('https://trade-analyze-backend.onrender.com/api/indicators')
@@ -37,9 +52,9 @@ export default function Dashboard() {
         averageVolume: result.summary?.average_volume,
         trendDirection: result.summary?.trend_direction,
         trendStrength: result.summary?.trend_strength_percent,
-        rsi: result.indicator_values?.calculate_rsi,
-        macd: result.indicator_values?.calculate_macd,
-        adx: result.indicator_values?.calculate_adx,
+        rsi: result.indicator_values?.rsi,      // ✅ doğru alan
+        macd: result.indicator_values?.macd,    // ✅ doğru alan
+        adx: result.indicator_values?.adx,      // ✅ doğru alan
         detailedAnalysis: result.summary?.detailed_analysis || "Detaylı analiz verisi bulunamadı.",
         strategies: result.strategies || [],
       };
@@ -57,7 +72,7 @@ export default function Dashboard() {
   const handleIndicatorAnalyze = () => {
     if (selectedIndicator && indicatorValues[selectedIndicator] !== undefined) {
       setSelectedIndicatorResult({
-        name: selectedIndicator,
+        name: indicatorDisplayNames[selectedIndicator] || selectedIndicator,
         value: indicatorValues[selectedIndicator],
       });
     }
@@ -83,7 +98,7 @@ export default function Dashboard() {
                 <option value="">Bir İndikatör Seçiniz</option>
                 {indicators.map((indicator) => (
                   <option key={indicator} value={indicator}>
-                    {indicator}
+                    {indicatorDisplayNames[indicator] || indicator}
                   </option>
                 ))}
               </select>
@@ -136,9 +151,9 @@ export default function Dashboard() {
               <h2 className="text-xl font-bold text-indigo-600 mb-2">{item.symbol} ({item.interval})</h2>
               <div className="text-gray-700 space-y-1 text-sm">
                 <p><strong>Trend Yönü:</strong> {item.trendDirection} ({item.trendStrength}%)</p>
-                <p><strong>RSI:</strong> {item.rsi}</p>
-                <p><strong>MACD:</strong> {item.macd}</p>
-                <p><strong>ADX:</strong> {item.adx}</p>
+                <p><strong>RSI:</strong> {item.rsi !== undefined ? item.rsi.toFixed(2) : '-'}</p>
+                <p><strong>MACD:</strong> {item.macd !== undefined ? item.macd.toFixed(4) : '-'}</p>
+                <p><strong>ADX:</strong> {item.adx !== undefined ? item.adx.toFixed(2) : '-'}</p>
               </div>
 
               <div className="mt-4 p-4 bg-gray-50 rounded-lg text-gray-600 text-sm whitespace-pre-line">
