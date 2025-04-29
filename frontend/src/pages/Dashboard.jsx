@@ -1,10 +1,7 @@
-// src/pages/Dashboard.jsx
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
 import Navbar from '../components/Navbar';
 import { analyzeCandles } from '../api/binanceAnalyze';
-import IndicatorDropdown from '../components/IndicatorDropdown';
 
 export default function Dashboard() {
   const [feedbacks, setFeedbacks] = useState([]);
@@ -12,7 +9,21 @@ export default function Dashboard() {
   const [interval, setInterval] = useState('1m');
   const [loading, setLoading] = useState(false);
   const [indicatorValues, setIndicatorValues] = useState({});
+  const [selectedIndicator, setSelectedIndicator] = useState('');
   const [selectedIndicatorResult, setSelectedIndicatorResult] = useState(null);
+  const [indicators, setIndicators] = useState([]);
+
+  useEffect(() => {
+    // İndikatörleri backend'den çekiyoruz
+    fetch('https://trade-analyze-backend.onrender.com/api/indicators')
+      .then((res) => res.json())
+      .then((data) => {
+        setIndicators(data.indicators || []);
+      })
+      .catch((error) => {
+        console.error('İndikatör listesi çekilemedi:', error);
+      });
+  }, []);
 
   const handleAnalyze = async () => {
     setLoading(true);
@@ -26,28 +37,28 @@ export default function Dashboard() {
         averageVolume: result.summary?.average_volume,
         trendDirection: result.summary?.trend_direction,
         trendStrength: result.summary?.trend_strength_percent,
-        rsi: result.indicator_values?.calculate_rsi, // 🔥 DEĞİŞTİRİLDİ
-        macd: result.indicator_values?.calculate_macd, // 🔥 DEĞİŞTİRİLDİ
-        adx: result.indicator_values?.calculate_adx, // 🔥 DEĞİŞTİRİLDİ
+        rsi: result.indicator_values?.calculate_rsi,
+        macd: result.indicator_values?.calculate_macd,
+        adx: result.indicator_values?.calculate_adx,
         detailedAnalysis: result.summary?.detailed_analysis || "Detaylı analiz verisi bulunamadı.",
-        strategies: result.strategies || []
+        strategies: result.strategies || [],
       };
 
       setFeedbacks(prev => [feedbackItem, ...prev]);
       setIndicatorValues(result.indicator_values || {});
     } catch (error) {
       console.error('Veri çekme veya analiz hatası:', error);
-      alert('Veri çekilirken veya analiz edilirken hata oluştu. Lütfen tekrar deneyin.');
+      alert('Veri çekilirken veya analiz edilirken hata oluştu.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleIndicatorAnalyze = (selected) => {
-    if (selected && indicatorValues[selected] !== undefined) {
+  const handleIndicatorAnalyze = () => {
+    if (selectedIndicator && indicatorValues[selectedIndicator] !== undefined) {
       setSelectedIndicatorResult({
-        name: selected,
-        value: indicatorValues[selected],
+        name: selectedIndicator,
+        value: indicatorValues[selectedIndicator],
       });
     }
   };
@@ -60,21 +71,38 @@ export default function Dashboard() {
         <main className="p-6 overflow-auto">
           <h1 className="text-xl font-bold mb-4">Dashboard</h1>
 
-          {Object.keys(indicatorValues).length > 0 && (
-            <div className="bg-white p-6 rounded-lg shadow mb-6">
-              <h2 className="text-lg font-semibold mb-4">İndikatör Seçimi</h2>
-              <IndicatorDropdown
-                indicatorValues={indicatorValues}
-                onAnalyze={handleIndicatorAnalyze}
-              />
-              {selectedIndicatorResult && (
-                <div className="mt-4 p-4 border rounded bg-gray-100">
-                  <h3 className="text-lg font-semibold">{selectedIndicatorResult.name}</h3>
-                  <p>Değer: {JSON.stringify(selectedIndicatorResult.value)}</p>
-                </div>
-              )}
+          <div className="bg-white p-6 rounded-lg shadow mb-6">
+            <h2 className="text-lg font-semibold mb-4">İndikatör Seçimi</h2>
+
+            <div className="flex gap-4 mb-4">
+              <select
+                value={selectedIndicator}
+                onChange={(e) => setSelectedIndicator(e.target.value)}
+                className="border p-2 rounded w-full"
+              >
+                <option value="">Bir İndikatör Seçiniz</option>
+                {indicators.map((indicator) => (
+                  <option key={indicator} value={indicator}>
+                    {indicator}
+                  </option>
+                ))}
+              </select>
+
+              <button
+                onClick={handleIndicatorAnalyze}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded"
+              >
+                Seçili İndikatörü Analiz Et
+              </button>
             </div>
-          )}
+
+            {selectedIndicatorResult && (
+              <div className="mt-4 p-4 border rounded bg-gray-100">
+                <h3 className="text-lg font-semibold">{selectedIndicatorResult.name}</h3>
+                <p>Değer: {JSON.stringify(selectedIndicatorResult.value)}</p>
+              </div>
+            )}
+          </div>
 
           <div className="bg-white p-6 rounded-lg shadow mb-6">
             <h2 className="text-lg font-semibold mb-4">Analiz Başlat</h2>
