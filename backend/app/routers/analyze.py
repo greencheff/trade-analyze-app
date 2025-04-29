@@ -69,3 +69,44 @@ async def analyze_data(request: Request):
     except Exception as e:
         traceback.print_exc()
         raise HTTPException(500, f"Genel analiz hatası: {e}")
+@router.post("/single-indicator")
+async def analyze_single_indicator(request: Request):
+    try:
+        body = await request.json()
+        candles = body.get("candles", [])
+        selected_indicator = body.get("selectedIndicator", None)
+
+        if not candles or not isinstance(candles, list):
+            raise HTTPException(400, "Gönderilen candle verisi eksik veya hatalı.")
+        if not selected_indicator:
+            raise HTTPException(400, "Seçilen indikatör eksik.")
+
+        df = pd.DataFrame(candles, columns=["timestamp", "open", "high", "low", "close", "volume"])
+        df["timestamp"] = pd.to_datetime(df["timestamp"], unit="ms")
+        df.set_index("timestamp", inplace=True)
+        df = df.astype(float)
+
+        obj = getattr(indicators, selected_indicator, None)
+        if not obj or not callable(obj):
+            raise HTTPException(400, "Geçersiz veya desteklenmeyen indikatör seçimi.")
+
+        try:
+            result = obj(df)
+            if hasattr(result, "iloc"):
+                result_value = result.iloc[-1]
+            else:
+                result_value = result
+        except Exception as e:
+            raise HTTPException(500, f"İndikatör hesaplama hatası: {str(e)}")
+
+        return {
+            "status": "ok",
+            "indicator": selected_indicator,
+            "value": float(result_value)
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(500, f"Genel analiz hatası: {e}")
