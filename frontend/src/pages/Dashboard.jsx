@@ -107,4 +107,111 @@ export default function Dashboard() {
       }
     } catch (error) {
       console.error('İndikatör analizi hatası:', error);
-      alert('İndikatör analizi sırasında
+      alert('İndikatör analizi sırasında hata oluştu.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="flex h-screen bg-gray-100">
+      <Sidebar />
+      <div className="flex-1 flex flex-col">
+        <Navbar />
+        <main className="p-6 overflow-auto">
+          <h1 className="text-xl font-bold mb-4">Dashboard</h1>
+
+          <div className="bg-white p-6 rounded-lg shadow mb-6">
+            <h2 className="text-lg font-semibold mb-4">İndikatör Seçimi</h2>
+
+            <div className="flex gap-4 mb-4">
+              <select
+                value={selectedIndicator}
+                onChange={(e) => setSelectedIndicator(e.target.value)}
+                className="border p-2 rounded w-full"
+              >
+                <option value="">Bir İndikatör Seçiniz</option>
+                {indicators.map((indicator) => (
+                  <option key={indicator} value={indicator}>
+                    {indicatorDisplayNames[indicator] || indicator}
+                  </option>
+                ))}
+              </select>
+
+              <button
+                onClick={handleIndicatorAnalyze}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded"
+                disabled={loading}
+              >
+                {loading ? 'İşlem Yapılıyor...' : 'Seçili İndikatörü Analiz Et'}
+              </button>
+            </div>
+
+            {selectedIndicatorResult && (
+              <div className="mt-4 p-4 border rounded bg-gray-100">
+                <h3 className="text-lg font-semibold">{selectedIndicatorResult.name}</h3>
+                <p>Değer: {JSON.stringify(selectedIndicatorResult.value)}</p>
+              </div>
+            )}
+          </div>
+
+          <div className="bg-white p-6 rounded-lg shadow mb-6">
+            <h2 className="text-lg font-semibold mb-4">Analiz Başlat</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <input
+                type="text"
+                value={symbol}
+                onChange={(e) => setSymbol(e.target.value)}
+                placeholder="Örn: BTCUSDT"
+                className="border p-2 rounded w-full"
+              />
+              <input
+                type="text"
+                value={interval}
+                onChange={(e) => setInterval(e.target.value)}
+                placeholder="Örn: 1m, 5m, 1h"
+                className="border p-2 rounded w-full"
+              />
+              <button
+                onClick={handleAnalyze}
+                disabled={loading}
+                className="col-span-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+              >
+                {loading ? 'Analiz Yapılıyor...' : 'Analiz Et'}
+              </button>
+            </div>
+          </div>
+
+          {feedbacks.map((item, idx) => (
+            <div key={idx} className="bg-white p-6 rounded-lg shadow mb-6">
+              <h2 className="text-xl font-bold text-indigo-600 mb-2">{item.symbol} ({item.interval})</h2>
+              <div className="text-gray-700 space-y-1 text-sm">
+                <p><strong>Trend Yönü:</strong> {item.trendDirection} ({item.trendStrength}%)</p>
+                <p><strong>RSI:</strong> {item.rsi !== undefined ? item.rsi.toFixed(2) : '-'}</p>
+                <p><strong>MACD:</strong> {item.macd !== undefined ? item.macd.toFixed(4) : '-'}</p>
+                <p><strong>ADX:</strong> {item.adx !== undefined ? item.adx.toFixed(2) : '-'}</p>
+              </div>
+
+              <div className="mt-4 p-4 bg-gray-50 rounded-lg text-gray-600 text-sm whitespace-pre-line">
+                {item.detailedAnalysis}
+              </div>
+
+              {item.strategies.length > 0 && (
+                <div className="mt-4">
+                  <h3 className="font-semibold text-md text-green-700 mb-2">Strateji Önerileri:</h3>
+                  <ul className="list-disc ml-5 space-y-1">
+                    {item.strategies.map((strategy, i) => (
+                      <li key={i}>
+                        <strong>{strategy.name}:</strong> {strategy.explanation}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          ))}
+        </main>
+      </div>
+    </div>
+  );
+}
