@@ -18,5 +18,10 @@ class StrategyRequest(BaseModel):
         "mtf_confirmation",
         "orderblock_rsi_divergence",
         "bollinger_breakout",
-        "breakout_volume"
+        "breakout_volume",
+        "ema_ribbon_trend",
+        "stochastic_rsi_momentum",
+        "keltner_channel_breakout",
+        "pivot_point_strategy",
+        "liquidity_sweep_bos"
     ]
