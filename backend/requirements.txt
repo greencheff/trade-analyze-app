@@ -9,3 +9,4 @@ redis
 ccxt
 alembic
 psycopg2-binary
+pandas-ta
