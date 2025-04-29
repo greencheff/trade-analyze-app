@@ -69,6 +69,9 @@ async def analyze_data(request: Request):
     except Exception as e:
         traceback.print_exc()
         raise HTTPException(500, f"Genel analiz hatası: {e}")
+
+# 🔥 YENİ EKLEDİĞİMİZ KISIM BURADAN BAŞLIYOR 🔥
+
 @router.post("/single-indicator")
 async def analyze_single_indicator(request: Request):
     try:
