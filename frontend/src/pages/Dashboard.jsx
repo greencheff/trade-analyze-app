@@ -3,16 +3,13 @@ import Sidebar from '../components/Sidebar';
 import Navbar from '../components/Navbar';
 
 export default function Dashboard() {
-  const [feedbacks, setFeedbacks] = useState([]);
-  const [symbol, setSymbol] = useState('BTCUSDT'); // Şu anda sabit
-  const [interval, setInterval] = useState('1m');   // 1 dakikalık mumlar
-  const [loading, setLoading] = useState(false);
-  const [indicatorValues, setIndicatorValues] = useState({});
   const [selectedIndicator, setSelectedIndicator] = useState('');
   const [selectedIndicatorResult, setSelectedIndicatorResult] = useState(null);
+  const [symbol, setSymbol] = useState('BTCUSDT'); // Şu anda sabit
+  const [interval, setInterval] = useState('1m');   // 1 dakikalık veriler
+  const [loading, setLoading] = useState(false);
   const [indicators, setIndicators] = useState([]);
 
-  // Kullanıcı dostu isimler
   const indicatorDisplayNames = {
     "calculate_rsi": "RSI",
     "calculate_macd": "MACD",
@@ -38,7 +35,7 @@ export default function Dashboard() {
       });
   }, []);
 
-  const handleIndicatorAnalyze = async () => {
+  const handleAnalyze = async () => {
     if (!selectedIndicator) {
       alert('Lütfen bir indikatör seçiniz.');
       return;
@@ -59,6 +56,7 @@ export default function Dashboard() {
         volume: parseFloat(item[5]),
       }));
 
+      // 🔵 Seçili indikatörü backend'e gönderiyoruz
       const response = await fetch('https://trade-analyze-backend.onrender.com/single-indicator', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -79,8 +77,8 @@ export default function Dashboard() {
         alert(data.detail || 'İndikatör analizi başarısız oldu.');
       }
     } catch (error) {
-      console.error('İndikatör analizi hatası:', error);
-      alert('İndikatör analizi sırasında hata oluştu.');
+      console.error('Analiz hatası:', error);
+      alert('Analiz sırasında hata oluştu.');
     } finally {
       setLoading(false);
     }
@@ -110,24 +108,27 @@ export default function Dashboard() {
                   </option>
                 ))}
               </select>
-
-              <button
-                onClick={handleIndicatorAnalyze}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded"
-                disabled={loading}
-              >
-                {loading ? 'İşlem Yapılıyor...' : 'Seçili İndikatörü Analiz Et'}
-              </button>
             </div>
 
-            {selectedIndicatorResult && (
-              <div className="mt-4 p-4 border rounded bg-gray-100">
-                <h3 className="text-lg font-semibold">{selectedIndicatorResult.name}</h3>
-                <p>Değer: {JSON.stringify(selectedIndicatorResult.value)}</p>
-              </div>
-            )}
+            <div className="flex gap-4">
+              <button
+                onClick={handleAnalyze}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-full"
+                disabled={loading}
+              >
+                {loading ? 'Analiz Yapılıyor...' : 'Analiz Et'}
+              </button>
+            </div>
           </div>
 
+          {selectedIndicatorResult && (
+            <div className="bg-white p-6 rounded-lg shadow">
+              <h2 className="text-lg font-bold text-indigo-600 mb-2">{selectedIndicatorResult.name}</h2>
+              <p className="text-gray-700 text-sm">
+                Değer: {JSON.stringify(selectedIndicatorResult.value)}
+              </p>
+            </div>
+          )}
         </main>
       </div>
     </div>
